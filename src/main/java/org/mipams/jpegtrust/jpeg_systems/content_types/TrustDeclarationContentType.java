@@ -7,6 +7,6 @@ public class TrustDeclarationContentType extends TrustManifestContentType {
 
     @Override
     public String getContentTypeUuid() {
-        return "63326D61-0011-0010-8000-00AA00389B71";
+        return "63326D64-0011-0010-8000-00AA00389B71";
     }
 }

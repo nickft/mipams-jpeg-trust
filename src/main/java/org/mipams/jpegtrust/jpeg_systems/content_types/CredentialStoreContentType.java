@@ -22,12 +22,12 @@ public class CredentialStoreContentType implements ProvenanceContentType {
 
     @Override
     public String getContentTypeUuid() {
-        return "6D707663-0011-0010-8000-00AA00389B71";
+        return "63327663-0011-0010-8000-00AA00389B71";
     }
 
     @Override
     public String getLabel() {
-        return "mpms.provenance.credentials";
+        return "c2pa.credentials";
     }
 
     @Override

@@ -7,6 +7,7 @@ import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimSignatureContentType
 import org.mipams.jpegtrust.jpeg_systems.content_types.CompressedManifestContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.CredentialStoreContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentType;
+import org.mipams.jpegtrust.jpeg_systems.content_types.TrustDeclarationContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.TrustRecordContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.UpdateManifestContentType;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +44,11 @@ public class JpegTrustConfig {
     @Bean
     public StandardManifestContentType standardManifestContentType() {
         return new StandardManifestContentType();
+    }
+
+    @Bean
+    public TrustDeclarationContentType trustDeclarationContentType() {
+        return new TrustDeclarationContentType();
     }
 
     @Bean
