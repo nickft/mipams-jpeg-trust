@@ -1,40 +1,47 @@
 package org.mipams.jpegtrust.entities;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
-
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "dc:title", "dc:format", "instanceID", "claim_generator", "claim_generator_info", "signature", "assertions" })
+@JsonPropertyOrder({ "instanceID", "claim_generator_info", "signature", "created_assertions",
+        "gathered_assertions", "dc:title", "redacted_assertions", "alg", "alg_soft" })
 public class Claim implements ProvenanceEntity {
 
-    @JsonProperty("claim_generator")
-    private String claimGenerator;
-
-    @JsonProperty("claim_generator_info")
-    private Map<String, String> claimGeneratorInfo = new HashMap<>();
-
-    private String signature;
-
-    private TreeSet<HashedUriReference> assertions = new TreeSet<>();
-
-    @JsonProperty("dc:format")
-    private String mediaType;
-
-    @JsonProperty("dc:title")
-    private String title;
-    
     @JsonProperty("instanceID")
     private String instanceId;
 
+    @JsonProperty("claim_generator_info")
+    private LinkedHashMap<String, String> claimGeneratorInfo = new LinkedHashMap<>();
+
+    @JsonProperty("signature")
+    private String signature;
+
+    @JsonProperty("created_assertions")
+    private LinkedHashSet<HashedUriReference> createdAssertions = new LinkedHashSet<>();
+
+    @JsonProperty("gathered_assertions")
+    private LinkedHashSet<HashedUriReference> gatheredAssertions = new LinkedHashSet<>();
+
+    @JsonProperty("dc:title")
+    private String title;
+
     @JsonProperty("redacted_assertions")
-    private List<String> redactedAssertions;
+    private LinkedHashSet<String> redactedAssertions;
 
     @JsonProperty("alg")
     private String algorithm;
+
+    @JsonProperty("alg_soft")
+    private String algorithmSoftware;
+
+    @JsonIgnore
+    public boolean isMalformed() {
+        return instanceId == null || signature == null || createdAssertions.isEmpty()
+                || claimGeneratorInfo == null;
+    }
 
     public String getInstanceId() {
         return instanceId;
@@ -44,19 +51,11 @@ public class Claim implements ProvenanceEntity {
         this.instanceId = instanceId;
     }
 
-    public TreeSet<HashedUriReference> getAssertions() {
-        return assertions;
-    }
-
-    public void setAssertions(TreeSet<HashedUriReference> assertions) {
-        this.assertions = assertions;
-    }
-
-    public Map<String, String> getClaimGeneratorInfo() {
+    public LinkedHashMap<String, String> getClaimGeneratorInfo() {
         return claimGeneratorInfo;
     }
 
-    public void setClaimGeneratorInfo(Map<String, String> claimGeneratorInfo) {
+    public void setClaimGeneratorInfo(LinkedHashMap<String, String> claimGeneratorInfo) {
         this.claimGeneratorInfo = claimGeneratorInfo;
     }
 
@@ -68,20 +67,20 @@ public class Claim implements ProvenanceEntity {
         this.signature = signature;
     }
 
-    public List<String> getRedactedAssertions() {
-        return redactedAssertions;
-    }
- 
-    public void setRedactedAssertions(List<String> redactedAssertions) {
-        this.redactedAssertions = redactedAssertions;
+    public LinkedHashSet<HashedUriReference> getCreatedAssertions() {
+        return createdAssertions;
     }
 
-    public String getMediaType() {
-        return mediaType;
+    public void setCreatedAssertions(LinkedHashSet<HashedUriReference> assertions) {
+        this.createdAssertions = assertions;
     }
 
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
+    public LinkedHashSet<HashedUriReference> getGatheredAssertions() {
+        return gatheredAssertions;
+    }
+
+    public void setGatheredAssertions(LinkedHashSet<HashedUriReference> gatheredAssertions) {
+        this.gatheredAssertions = gatheredAssertions;
     }
 
     public String getTitle() {
@@ -92,12 +91,12 @@ public class Claim implements ProvenanceEntity {
         this.title = title;
     }
 
-    public String getClaimGenerator() {
-        return claimGenerator;
+    public LinkedHashSet<String> getRedactedAssertions() {
+        return redactedAssertions;
     }
 
-    public void setClaimGenerator(String generatorInfoName) {
-        this.claimGenerator = generatorInfoName;
+    public void setRedactedAssertions(LinkedHashSet<String> redactedAssertions) {
+        this.redactedAssertions = redactedAssertions;
     }
 
     public String getAlgorithm() {
@@ -106,5 +105,13 @@ public class Claim implements ProvenanceEntity {
 
     public void setAlgorithm(String alg) {
         this.algorithm = alg;
+    }
+
+    public String getAlgorithmSoftware() {
+        return algorithmSoftware;
+    }
+
+    public void setAlgorithmSoftware(String algorithmSoftware) {
+        this.algorithmSoftware = algorithmSoftware;
     }
 }

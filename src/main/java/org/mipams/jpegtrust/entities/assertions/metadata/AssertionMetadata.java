@@ -3,12 +3,19 @@ package org.mipams.jpegtrust.entities.assertions.metadata;
 import java.util.List;
 
 import org.mipams.jpegtrust.entities.HashedUriReference;
+import org.mipams.jpegtrust.entities.assertions.CborAssertion;
 import org.mipams.jpegtrust.entities.assertions.region.Region;
+import org.mipams.jumbf.util.MipamsException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AssertionMetadata {
-    
+public class AssertionMetadata extends CborAssertion {
+
+    @Override
+    public String getLabel() {
+        return "c2pa.assertion.metadata";
+    }
+
     @JsonProperty("dateTime")
     private String dateTime;
 
@@ -21,7 +28,7 @@ public class AssertionMetadata {
     private Source dataSource;
 
     private List<String> localizations;
-    
+
     private Region regionOfInterest;
 
     public String getDateTime() {
@@ -70,5 +77,10 @@ public class AssertionMetadata {
 
     public void setRegionOfInterest(Region regionOfInterest) {
         this.regionOfInterest = regionOfInterest;
+    }
+
+    @Override
+    public boolean isReductable() throws MipamsException {
+        return true;
     }
 }

@@ -56,5 +56,5 @@ public enum ActionChoice {
     public static boolean isCompliant(String input) {
         return REGEX_PATTERN.matcher(input).matches();
     }
-    
+
 }

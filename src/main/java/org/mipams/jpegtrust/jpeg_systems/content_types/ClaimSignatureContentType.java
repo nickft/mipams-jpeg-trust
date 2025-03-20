@@ -30,21 +30,22 @@ public class ClaimSignatureContentType implements ProvenanceContentType {
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
-            throws MipamsException {
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input,
+            ParseMetadata parseMetadata) throws MipamsException {
 
         String claimSignatureDir = CoreUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
 
         ParseMetadata claimSignatureParseMetadata = new ParseMetadata();
-        claimSignatureParseMetadata.setAvailableBytesForBox(parseMetadata.getAvailableBytesForBox());
+        claimSignatureParseMetadata
+                .setAvailableBytesForBox(parseMetadata.getAvailableBytesForBox());
         claimSignatureParseMetadata.setParentDirectory(claimSignatureDir);
 
         return List.of(cborBoxService.parseFromJumbfFile(input, claimSignatureParseMetadata));
     }
 
     @Override
-    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList, OutputStream outputStream)
-            throws MipamsException {
+    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList,
+            OutputStream outputStream) throws MipamsException {
 
         CborBox cborBox = (CborBox) contentBoxList.get(0);
         cborBoxService.writeToJumbfFile(cborBox, outputStream);

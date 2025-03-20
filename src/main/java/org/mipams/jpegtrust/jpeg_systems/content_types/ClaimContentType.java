@@ -28,12 +28,16 @@ public class ClaimContentType implements ProvenanceContentType {
 
     @Override
     public String getLabel() {
+        return "c2pa.claim.v2";
+    }
+
+    public String getLabelV1() {
         return "c2pa.claim";
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
-            throws MipamsException {
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input,
+            ParseMetadata parseMetadata) throws MipamsException {
 
         String claimDir = CoreUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
 
@@ -45,8 +49,8 @@ public class ClaimContentType implements ProvenanceContentType {
     }
 
     @Override
-    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList, OutputStream outputStream)
-            throws MipamsException {
+    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList,
+            OutputStream outputStream) throws MipamsException {
         CborBox cborBox = (CborBox) contentBoxList.get(0);
         cborBoxService.writeToJumbfFile(cborBox, outputStream);
     }

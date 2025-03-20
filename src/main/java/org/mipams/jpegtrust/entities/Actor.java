@@ -4,7 +4,7 @@ import java.util.List;
 
 public class Actor {
     String identifier;
-    List<HashedUriReference> credentials; 
+    List<HashedUriReference> credentials;
 
     public String getIdentifier() {
         return identifier;

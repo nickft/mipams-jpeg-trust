@@ -17,39 +17,46 @@ public class JumbfUtils {
 
     private static final String JUMBF_URI_REFERENCE_REGEX = "self#jumbf=[\\w\\d\\/][\\w\\d\\.\\/:\\-]+[\\w\\d]";
 
-    public static Optional<JumbfBox> searchJumbfBox(JumbfBox superBox, String uriReference) throws MipamsException{
-        if(!isJumbfUriReferenceValid(uriReference)) {
-            throw new MipamsException(String.format("Invalid JUMBF URI reference acccording to ISO/IEC 19566-5 specification: [%s]", uriReference));
+    public static Optional<JumbfBox> searchJumbfBox(JumbfBox superBox, String uriReference)
+            throws MipamsException {
+        if (!isJumbfUriReferenceValid(uriReference)) {
+            throw new MipamsException(String.format(
+                    "Invalid JUMBF URI reference acccording to ISO/IEC 19566-5 specification: [%s]",
+                    uriReference));
         }
 
         final String uriPath = uriReference.substring("self#jumbf=".length());
-        final boolean isAbsolute = uriPath.startsWith("/");
 
         List<String> literals = new ArrayList<>(Arrays.asList(uriPath.split("/")));
 
-        if(isAbsolute) {
+        if (isJumbfUriAbsolute(uriReference)) {
             literals.removeFirst();
             String superBoxDescriptionBoxLabel = literals.removeFirst();
 
-            if(!superBoxDescriptionBoxLabel.equals(superBox.getDescriptionBox().getLabel())) {
-                throw new MipamsException(String.format("Invalid superbox description box label. Searching for [%s] but found %s", uriReference, superBox.getDescriptionBox().getLabel()));
+            if (!superBoxDescriptionBoxLabel.equals(superBox.getDescriptionBox().getLabel())) {
+                throw new MipamsException(String.format(
+                        "Invalid superbox description box label. Searching for [%s] but found %s",
+                        uriReference, superBox.getDescriptionBox().getLabel()));
             }
 
-            if(literals.isEmpty()) {
+            if (literals.isEmpty()) {
                 return Optional.of(superBox);
             }
         }
 
-        Iterator<BmffBox> jumbfBoxIterator = superBox.getContentBoxList().stream().filter(contentBox -> contentBox.getClass().equals(JumbfBox.class)).iterator();
+        Iterator<BmffBox> jumbfBoxIterator = superBox.getContentBoxList().stream()
+                .filter(contentBox -> contentBox.getClass().equals(JumbfBox.class)).iterator();
         Iterator<String> literalIterator = literals.iterator();
-        while(literalIterator.hasNext()) {
+        while (literalIterator.hasNext()) {
             String literal = literalIterator.next();
-            while(jumbfBoxIterator.hasNext()) {
+            while (jumbfBoxIterator.hasNext()) {
                 JumbfBox box = (JumbfBox) jumbfBoxIterator.next();
 
-                if(literal.equals(box.getDescriptionBox().getLabel())) {
-                    if(literalIterator.hasNext()) {
-                        jumbfBoxIterator = box.getContentBoxList().stream().filter(contentBox -> contentBox.getClass().equals(JumbfBox.class)).iterator();
+                if (literal.equals(box.getDescriptionBox().getLabel())) {
+                    if (literalIterator.hasNext()) {
+                        jumbfBoxIterator = box.getContentBoxList().stream()
+                                .filter(contentBox -> contentBox.getClass().equals(JumbfBox.class))
+                                .iterator();
                     } else {
                         return Optional.of(box);
                     }
@@ -57,12 +64,12 @@ public class JumbfUtils {
                 }
             }
         }
-        
+
         return (jumbfBoxIterator.hasNext()) ? Optional.of(new JumbfBox()) : Optional.empty();
     }
 
-    private static boolean isJumbfUriReferenceValid(String uriReference) {
-        if(uriReference == null) {
+    public static boolean isJumbfUriReferenceValid(String uriReference) {
+        if (uriReference == null) {
             return false;
         }
 
@@ -72,11 +79,14 @@ public class JumbfUtils {
         return matcher.matches();
     }
 
-    public static long getSizeOfJumbfInApp11SegmentsInBytes(JumbfBox jumbfBox) throws MipamsException{
-        long jumbfBoxSize = (jumbfBox.getBoxSizeFromBmffHeaders() > 0) ? jumbfBox.getBoxSizeFromBmffHeaders() : jumbfBox.getBoxSize();
+    public static long getSizeOfJumbfInApp11SegmentsInBytes(JumbfBox jumbfBox)
+            throws MipamsException {
+        long jumbfBoxSize = (jumbfBox.getBoxSizeFromBmffHeaders() > 0) ? jumbfBox.getBoxSizeFromBmffHeaders()
+                : jumbfBox.getBoxSize();
 
         if (jumbfBoxSize == 0) {
-            throw new MipamsException("Cannot know the size of JUMBF Box in advance. LBox equals to 0.");
+            throw new MipamsException(
+                    "Cannot know the size of JUMBF Box in advance. LBox equals to 0.");
         }
 
         long jumbfBoxHeaderSize = CoreUtils.INT_BYTE_SIZE * 2;
@@ -90,9 +100,14 @@ public class JumbfUtils {
         final int boxInstanceNumberSize = CoreUtils.WORD_BYTE_SIZE;
         final int packetSequenceSize = CoreUtils.INT_BYTE_SIZE;
 
-        final long jpegXtHeaderSize = app11MarkerSize + segmentLengthSize + commonIdentifierSize + boxInstanceNumberSize + packetSequenceSize + jumbfBoxHeaderSize;
+        final long jpegXtHeaderSize = app11MarkerSize + segmentLengthSize + commonIdentifierSize
+                + boxInstanceNumberSize + packetSequenceSize + jumbfBoxHeaderSize;
 
         long totalApp11SegmentsSize = jpegXtHeaderSize - jumbfBoxHeaderSize + jpegXtHeaderSize * (totalSegments - 1);
         return totalApp11SegmentsSize + jumbfBoxSize;
+    }
+
+    public static boolean isJumbfUriAbsolute(String url) {
+        return url.startsWith("self#jumbf=/");
     }
 }

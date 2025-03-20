@@ -1,9 +1,7 @@
 package org.mipams.jpegtrust.entities.assertions.enums;
 
 public enum ShapeChoice {
-    RECTANGLE("rectangle"),
-    CIRCLE("circle"),
-    POLYGON("polygon");
+    RECTANGLE("rectangle"), CIRCLE("circle"), POLYGON("polygon");
 
     // Store the action choice string
     private final String value;
@@ -17,5 +15,5 @@ public enum ShapeChoice {
     public String getValue() {
         return value;
     }
-    
+
 }

@@ -8,7 +8,8 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "dc:title", "dc:format", "instanceID", "claim_generator", "claim_generator_info", "signature", "assertions" })
+@JsonPropertyOrder({ "dc:title", "dc:format", "instanceID", "claim_generator", "claim_generator_info", "signature",
+        "assertions" })
 public class ClaimSignature implements ProvenanceEntity {
 
     @JsonProperty("claim_generator")
@@ -27,7 +28,6 @@ public class ClaimSignature implements ProvenanceEntity {
     @JsonProperty("dc:title")
     private String title;
 
-    
     @JsonProperty("instanceID")
     private String instanceId;
 
@@ -68,7 +68,7 @@ public class ClaimSignature implements ProvenanceEntity {
     public List<String> getRedactedAssertions() {
         return redactedAssertions;
     }
- 
+
     public void setRedactedAssertions(List<String> redactedAssertions) {
         this.redactedAssertions = redactedAssertions;
     }

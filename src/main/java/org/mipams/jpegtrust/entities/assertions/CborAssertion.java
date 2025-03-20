@@ -9,7 +9,7 @@ import org.mipams.jumbf.services.content_types.CborContentType;
 import org.mipams.jumbf.util.MipamsException;
 
 public abstract class CborAssertion implements Assertion {
-    
+
     @Override
     public JumbfBox toJumbfBox() throws MipamsException {
         return toCborJumbfBox();

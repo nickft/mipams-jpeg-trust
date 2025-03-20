@@ -9,6 +9,7 @@ public class Source {
     SourceType type;
     String details;
     List<Actor> actors;
+
     public SourceType getType() {
         return type;
     }

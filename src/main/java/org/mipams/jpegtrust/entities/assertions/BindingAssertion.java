@@ -3,6 +3,10 @@ package org.mipams.jpegtrust.entities.assertions;
 import java.util.Arrays;
 import java.util.List;
 
+import org.mipams.jpegtrust.entities.validation.ValidationCode;
+import org.mipams.jpegtrust.entities.validation.ValidationException;
+import org.mipams.jumbf.util.MipamsException;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class BindingAssertion extends CborAssertion {
@@ -76,5 +80,10 @@ public class BindingAssertion extends CborAssertion {
     public void addExclusionRange(int len, int start) {
         ExclusionRange ex = new ExclusionRange(len, start);
         this.exclusions = List.of(ex);
+    }
+
+    @Override
+    public boolean isReductable() throws MipamsException {
+        throw new ValidationException(ValidationCode.ASSERTION_DATA_HASH_REDACTED);
     }
 }

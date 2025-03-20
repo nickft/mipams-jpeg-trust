@@ -6,7 +6,7 @@ import org.mipams.jpegtrust.entities.assertions.AssetType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class HashedExtUriReference extends HashedUriReference{
+public class HashedExtUriReference extends HashedUriReference {
     @JsonProperty("dc:format")
     private String dcFormat;
     private Integer size;

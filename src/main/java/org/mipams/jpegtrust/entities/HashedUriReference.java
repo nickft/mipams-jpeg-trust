@@ -1,8 +1,9 @@
 package org.mipams.jpegtrust.entities;
 
+import org.mipams.jumbf.util.CoreUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class HashedUriReference implements Comparable<HashedUriReference>{
+public class HashedUriReference implements Comparable<HashedUriReference> {
 
     public final static String SUPPORTED_HASH_ALGORITHM = "SHA-256";
 
@@ -18,7 +19,7 @@ public class HashedUriReference implements Comparable<HashedUriReference>{
 
     @JsonProperty("hash")
     private byte[] digest;
-    
+
     private String url;
 
     @JsonProperty("alg")
@@ -50,6 +51,9 @@ public class HashedUriReference implements Comparable<HashedUriReference>{
 
     @Override
     public int compareTo(HashedUriReference o) {
+        if (this.url.equals(o.getUrl())) {
+            return CoreUtils.convertByteArrayToHex(digest).compareTo(CoreUtils.convertByteArrayToHex(o.getDigest()));
+        }
         return this.url.compareTo(o.getUrl());
     }
 

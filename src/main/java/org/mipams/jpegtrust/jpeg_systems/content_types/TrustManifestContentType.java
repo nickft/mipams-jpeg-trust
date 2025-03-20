@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.mipams.jpegtrust.entities.validation.ValidationException;
 import org.mipams.jumbf.entities.BmffBox;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.entities.ParseMetadata;
@@ -65,4 +66,7 @@ public abstract class TrustManifestContentType implements ProvenanceContentType 
             jumbfBoxService.writeToJumbfFile(jumbfBox, outputStream);
         }
     }
+
+    public abstract void validateTypeOfAssertions(JumbfBox activeManifestJumbfBox) throws ValidationException;
+
 }

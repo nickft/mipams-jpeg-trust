@@ -14,6 +14,7 @@ import org.mipams.jumbf.util.MipamsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Deprecated
 @Service
 public class CredentialStoreContentType implements ProvenanceContentType {
 
@@ -31,21 +32,22 @@ public class CredentialStoreContentType implements ProvenanceContentType {
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
-            throws MipamsException {
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input,
+            ParseMetadata parseMetadata) throws MipamsException {
 
         String credentialStoreDir = CoreUtils.createSubdirectory(parseMetadata.getParentDirectory(), getLabel());
 
         ParseMetadata credentialStoreParseMetadata = new ParseMetadata();
-        credentialStoreParseMetadata.setAvailableBytesForBox(parseMetadata.getAvailableBytesForBox());
+        credentialStoreParseMetadata
+                .setAvailableBytesForBox(parseMetadata.getAvailableBytesForBox());
         credentialStoreParseMetadata.setParentDirectory(credentialStoreDir);
 
         return List.of(jsonBoxService.parseFromJumbfFile(input, credentialStoreParseMetadata));
     }
 
     @Override
-    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList, OutputStream outputStream)
-            throws MipamsException {
+    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList,
+            OutputStream outputStream) throws MipamsException {
 
         JsonBox jsonBox = (JsonBox) contentBoxList.get(0);
         jsonBoxService.writeToJumbfFile(jsonBox, outputStream);

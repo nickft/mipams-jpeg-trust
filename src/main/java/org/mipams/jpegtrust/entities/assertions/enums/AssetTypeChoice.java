@@ -45,8 +45,7 @@ public enum AssetTypeChoice {
 
     public String getValue() {
         return value;
-    } 
-
+    }
 
     public static boolean isCompliant(String input) {
         return REGEX_PATTERN.matcher(input).matches();

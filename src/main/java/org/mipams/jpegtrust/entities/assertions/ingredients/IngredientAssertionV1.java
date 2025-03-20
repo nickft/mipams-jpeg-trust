@@ -1,11 +1,16 @@
-package org.mipams.jpegtrust.entities.assertions;
+package org.mipams.jpegtrust.entities.assertions.ingredients;
+
+import java.util.List;
 
 import org.mipams.jpegtrust.entities.HashedUriReference;
+import org.mipams.jpegtrust.entities.assertions.CborAssertion;
 import org.mipams.jpegtrust.entities.assertions.metadata.AssertionMetadata;
+import org.mipams.jpegtrust.entities.assertions.metadata.StatusMap;
+import org.mipams.jumbf.util.MipamsException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class IngredientAssertion extends CborAssertion {
+public class IngredientAssertionV1 extends CborAssertion {
 
     public final static String RELATIONSHIP_PARENT_OF = "parentOf";
     public final static String RELATIONSHIP_COMPONENT_OF = "componentOf";
@@ -22,17 +27,28 @@ public class IngredientAssertion extends CborAssertion {
     @JsonProperty("dc:format")
     private String mediaType;
 
-    private String thumbnailURL;
-    
+    @JsonProperty("documentID")
+    private String documentId;
+
     @JsonProperty("instanceID")
     private String instanceId;
-    
+
     private String relationship;
 
     @JsonProperty("c2pa_manifest")
     private HashedUriReference ingredientReference;
 
+    private HashedUriReference thumbnail;
+
+    @JsonProperty("validationStatus")
+    private List<StatusMap> validationStatus;
+
     private AssertionMetadata metadata;
+
+    @Override
+    public boolean isReductable() throws MipamsException {
+        return true;
+    }
 
     public String getTitle() {
         return title;
@@ -50,12 +66,12 @@ public class IngredientAssertion extends CborAssertion {
         this.mediaType = mediaType;
     }
 
-    public String getThumbnailURL() {
-        return thumbnailURL;
+    public String getDocumentId() {
+        return documentId;
     }
 
-    public void setThumbnailURL(String thumbnailURL) {
-        this.thumbnailURL = thumbnailURL;
+    public void setDocumentId(String documentId) {
+        this.documentId = documentId;
     }
 
     public String getInstanceId() {
@@ -80,6 +96,14 @@ public class IngredientAssertion extends CborAssertion {
 
     public void setManifestReference(HashedUriReference manifestReference) {
         this.ingredientReference = manifestReference;
+    }
+
+    public HashedUriReference getThumbnail() {
+        return thumbnail;
+    }
+
+    public void setThumbnail(HashedUriReference thumbnail) {
+        this.thumbnail = thumbnail;
     }
 
     public AssertionMetadata getMetadata() {

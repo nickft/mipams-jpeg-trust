@@ -61,4 +61,3 @@ public class ActionTemplate {
         this.templateParameters = templateParameters;
     }
 }
-

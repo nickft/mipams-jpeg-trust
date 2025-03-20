@@ -1,18 +1,21 @@
 package org.mipams.jpegtrust.entities.assertions.actions;
 
 import java.util.List;
-import java.util.Map;
 
+import org.mipams.jpegtrust.entities.assertions.enums.ActionReason;
+import org.mipams.jpegtrust.entities.assertions.region.Region;
 
 public class ActionAssertion {
     private String action;
-    private String when;
     private String softwareAgent;
-    private String changed;
-    private String instanceID;
-    private List<ActionAssertion> related;
-    private Map<String, String> parameters;
+    private Integer softwareAgentIndex;
+    private String description;
     private String digitalSourceType;
+    private String when;
+    private List<Region> changes;
+    private List<ActionAssertion> related;
+    private ActionReason reason;
+    private ParametersMap parameters;
 
     public String getAction() {
         return action;
@@ -22,28 +25,28 @@ public class ActionAssertion {
         this.action = action;
     }
 
-    public String getChanged() {
-        return changed;
+    public String getSoftwareAgent() {
+        return softwareAgent;
     }
 
-    public void setChanged(String changed) {
-        this.changed = changed;
+    public void setSoftwareAgent(String softwareAgent) {
+        this.softwareAgent = softwareAgent;
     }
 
-    public String getInstanceID() {
-        return instanceID;
+    public Integer getSoftwareAgentIndex() {
+        return softwareAgentIndex;
     }
 
-    public void setInstanceID(String instanceID) {
-        this.instanceID = instanceID;
+    public void setSoftwareAgentIndex(Integer softwareAgentIndex) {
+        this.softwareAgentIndex = softwareAgentIndex;
     }
 
-    public List<ActionAssertion> getRelated() {
-        return related;
+    public String getDescription() {
+        return description;
     }
 
-    public void setRelated(List<ActionAssertion> related) {
-        this.related = related;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getDigitalSourceType() {
@@ -62,19 +65,35 @@ public class ActionAssertion {
         this.when = when;
     }
 
-    public Map<String, String> getParameters() {
+    public List<Region> getChanges() {
+        return changes;
+    }
+
+    public void setChanges(List<Region> changes) {
+        this.changes = changes;
+    }
+
+    public List<ActionAssertion> getRelated() {
+        return related;
+    }
+
+    public void setRelated(List<ActionAssertion> related) {
+        this.related = related;
+    }
+
+    public ActionReason getReason() {
+        return reason;
+    }
+
+    public void setReason(ActionReason reason) {
+        this.reason = reason;
+    }
+
+    public ParametersMap getParameters() {
         return parameters;
     }
 
-    public void setParameters(Map<String, String> parameters) {
+    public void setParameters(ParametersMap parameters) {
         this.parameters = parameters;
-    }
-
-    public String getSoftwareAgent() {
-        return softwareAgent;
-    }
-
-    public void setSoftwareAgent(String softwareAgent) {
-        this.softwareAgent = softwareAgent;
     }
 }

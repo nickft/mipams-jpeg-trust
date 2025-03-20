@@ -32,8 +32,8 @@ public class AssertionStoreContentType implements ProvenanceContentType {
     }
 
     @Override
-    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input, ParseMetadata parseMetadata)
-            throws MipamsException {
+    public List<BmffBox> parseContentBoxesFromJumbfFile(InputStream input,
+            ParseMetadata parseMetadata) throws MipamsException {
 
         List<BmffBox> contentBoxList = new ArrayList<>();
 
@@ -58,8 +58,8 @@ public class AssertionStoreContentType implements ProvenanceContentType {
     }
 
     @Override
-    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList, OutputStream outputStream)
-            throws MipamsException {
+    public void writeContentBoxesToJumbfFile(List<BmffBox> contentBoxList,
+            OutputStream outputStream) throws MipamsException {
 
         for (BmffBox bmffBox : contentBoxList) {
             JumbfBox assertionBox = (JumbfBox) bmffBox;

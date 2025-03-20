@@ -24,8 +24,20 @@ public class ThumbnailAssertion implements Assertion {
         this.isClaimCreationTime = true;
     }
 
+    public String getThumbnailUrl() {
+        return this.thumbnailUrl;
+    }
+
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public String getMediaType() {
+        return this.mediaType.toString();
+    }
+
+    public void setMediaType(MediaType mediaType) {
+        this.mediaType = mediaType;
     }
 
     public void setIsClaimIngredientThumbnail() {
@@ -41,23 +53,27 @@ public class ThumbnailAssertion implements Assertion {
     public String getLabel() {
         return this.isClaimCreationTime ? claimCreationThumbnailLabel : ingredientlThumbnailLabel;
     }
-    
+
     private JumbfBox toEmbeddedFileJumbfBox() throws MipamsException {
         JumbfBoxBuilder thumbnailJumbfBox = new JumbfBoxBuilder(new EmbeddedFileContentType());
         thumbnailJumbfBox.setJumbfBoxAsRequestable();
-        thumbnailJumbfBox.setLabel(String.format("%s.%s",getLabel(), this.mediaType.getSubtype()));
+        thumbnailJumbfBox.setLabel(String.format("%s.%s", getLabel(), this.mediaType.getSubtype()));
 
         EmbeddedFileDescriptionBox efdb = new EmbeddedFileDescriptionBox();
         efdb.setMediaType(MediaType.IMAGE_JPEG);
         efdb.markFileAsInternallyReferenced();
 
         BinaryDataBox efbd = new BinaryDataBox();
-        efbd.setFileUrl(this.thumbnailUrl); 
-
+        efbd.setFileUrl(this.thumbnailUrl);
 
         thumbnailJumbfBox.appendAllContentBoxes(List.of(efdb, efbd));
         thumbnailJumbfBox.setPrivateField(JpegTrustUtils.addSaltBytes());
 
         return thumbnailJumbfBox.getResult();
+    }
+
+    @Override
+    public boolean isReductable() throws MipamsException {
+        return true;
     }
 }
