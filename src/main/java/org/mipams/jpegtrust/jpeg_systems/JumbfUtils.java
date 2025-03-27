@@ -110,4 +110,14 @@ public class JumbfUtils {
     public static boolean isJumbfUriAbsolute(String url) {
         return url.startsWith("self#jumbf=/");
     }
+
+    public static String extractJumbfFragmentFromUri(String url) {
+        String[] result = url.split("#jumbf=");
+
+        if (result == null || result.length != 2) {
+            return null;
+        }
+
+        return result[1];
+    }
 }

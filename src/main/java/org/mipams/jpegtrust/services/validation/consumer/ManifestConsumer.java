@@ -16,6 +16,7 @@ import org.mipams.jpegtrust.entities.validation.ValidationCode;
 import org.mipams.jpegtrust.entities.validation.ValidationException;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicatorsInterface;
+import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimSignatureIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ManifestIndicators;
 import org.mipams.jpegtrust.jpeg_systems.JumbfUtils;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
@@ -97,8 +98,11 @@ public class ManifestConsumer {
             try {
                 ProvenanceEntity claimStructureToBeSigned = claimConsumer.deserializeClaimJumbfBox(claimJumbfBox);
                 claimIndicators = claimConsumer.buildClaimIndicatorSet(claimStructureToBeSigned);
+                ClaimSignatureIndicators claimSignatureIndicators = claimSignatureConsumer
+                        .buildClaimSignatureIndicatorSet(claimSignatureJumbfBox);
 
                 manifestIndicators.setClaim(claimIndicators);
+                manifestIndicators.setSignature(claimSignatureIndicators);
 
                 try {
                     claimSignatureConsumer.validateSignature(claimSignatureJumbfBox,
@@ -144,7 +148,7 @@ public class ManifestConsumer {
 
                 if (!JumbfUtils.isJumbfUriAbsolute(ref.getUrl())) {
                     absoluteAssertionJumbfUri = JpegTrustUtils.getProvenanceJumbfURL(
-                            manifestUuid, ref.getUrl());
+                            manifestUuid, JumbfUtils.extractJumbfFragmentFromUri(ref.getUrl()));
                 }
 
                 Optional<JumbfBox> assertionJumbfBox = JumbfUtils.searchJumbfBox(manifestStoreJumbfBox,

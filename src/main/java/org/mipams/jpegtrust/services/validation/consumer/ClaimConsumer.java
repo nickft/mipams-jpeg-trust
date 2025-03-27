@@ -113,7 +113,8 @@ public class ClaimConsumer {
             }
 
             String absolutePath = (JumbfUtils.isJumbfUriAbsolute(ref.getUrl())) ? ref.getUrl()
-                    : JpegTrustUtils.getProvenanceJumbfURL(manifestUuid, ref.getUrl());
+                    : JpegTrustUtils.getProvenanceJumbfURL(manifestUuid,
+                            JumbfUtils.extractJumbfFragmentFromUri(ref.getUrl()));
 
             if (!redactedAssertions.contains(absolutePath)) {
                 continue;

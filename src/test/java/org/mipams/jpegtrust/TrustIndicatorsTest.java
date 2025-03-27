@@ -47,7 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class})
+@ContextConfiguration(classes = { JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class })
 @ActiveProfiles("test")
 public class TrustIndicatorsTest {
 
@@ -62,8 +62,7 @@ public class TrustIndicatorsTest {
 
     @Test
     void testCreationOfTrustIndicatorsWithManifestV1() throws Exception {
-        String asset =
-            ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        String asset = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
 
         JumbfBox manifestStoreBox = getManifestStore(asset);
 
@@ -83,8 +82,7 @@ public class TrustIndicatorsTest {
 
     @Test
     void extractClaimV1() throws Exception {
-        String asset =
-            ResourceUtils.getFile("classpath:C.jpg").getAbsolutePath();
+        String asset = ResourceUtils.getFile("classpath:test-sample-standard-manifest.jpeg").getAbsolutePath();
 
         List<JumbfBox> rest = parser.parseMetadataFromFile(asset);
 

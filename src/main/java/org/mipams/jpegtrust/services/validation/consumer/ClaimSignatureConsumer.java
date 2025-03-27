@@ -11,14 +11,20 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.mipams.jpegtrust.cose.CoseUtils;
 import org.mipams.jpegtrust.entities.ProvenanceEntity;
 import org.mipams.jpegtrust.entities.validation.ValidationCode;
 import org.mipams.jpegtrust.entities.validation.ValidationException;
+import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimSignatureIndicators;
 import org.mipams.jumbf.entities.CborBox;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.util.MipamsException;
@@ -96,5 +102,41 @@ public class ClaimSignatureConsumer {
         } catch (Exception e) {
             throw new MipamsException(e);
         }
+    }
+
+    public ClaimSignatureIndicators buildClaimSignatureIndicatorSet(JumbfBox claimSignatureJumbfBox)
+            throws MipamsException {
+
+        List<X509Certificate> certificates = getListOfCertificatesFromClaimSignatureBox(claimSignatureJumbfBox);
+
+        X509Certificate primaryCert = certificates.get(0);
+
+        ClaimSignatureIndicators claimSignatureIndicators = new ClaimSignatureIndicators();
+
+        claimSignatureIndicators.setSignatureAlgorithm(primaryCert.getSigAlgName());
+
+        claimSignatureIndicators.getSubject().putAll(parseX500Principal(primaryCert.getSubjectX500Principal()));
+
+        claimSignatureIndicators.getIssuer().putAll(parseX500Principal(primaryCert.getIssuerX500Principal()));
+
+        claimSignatureIndicators.getValidity().put("not_before",
+                DateTimeFormatter.ISO_INSTANT.format(primaryCert.getNotBefore().toInstant()));
+        claimSignatureIndicators.getValidity().put("not_after",
+                DateTimeFormatter.ISO_INSTANT.format(primaryCert.getNotAfter().toInstant()));
+
+        return claimSignatureIndicators;
+    }
+
+    private static Map<String, String> parseX500Principal(X500Principal principal) {
+        Map<String, String> subjectMap = new LinkedHashMap<>();
+        String[] dnParts = principal.getName().split(",\\s*");
+
+        for (String part : dnParts) {
+            String[] keyValue = part.split("=", 2);
+            if (keyValue.length == 2) {
+                subjectMap.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return subjectMap;
     }
 }

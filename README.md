@@ -10,3 +10,4 @@
 |External references | |
 |Ingredient validation results | |
 |Assertion-specific validation (e.g., Actions, Metadata, Ingredients) | |
+|Not checking date formats | |
