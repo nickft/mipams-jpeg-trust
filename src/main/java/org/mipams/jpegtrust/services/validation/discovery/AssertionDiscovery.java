@@ -36,12 +36,14 @@ public class AssertionDiscovery {
         ACTION("c2pa.actions.v2"),
         ACTION_V1("c2pa.actions"),
         CAWG_IDENTIY("cawg.identity", true),
+        CAWG_METADATA("cawg.metadata", true),
         INGREDIENT("c2pa.ingredient.v3", true),
         INGREDIENT_V2("c2pa.ingredient.v2", true),
         INGREDIENT_V1("c2pa.ingredient", true),
         METADATA("c2pa.metadata", true),
         CLAIM_THUMBNAIL("c2pa.thumbnail.claim", true),
-        INGREDIENT_THUMBNAIL("c2pa.thumbnail.ingredient", true);
+        INGREDIENT_THUMBNAIL("c2pa.thumbnail.ingredient", true),
+        EXTENT_OF_MODIFICATION("jpt.mod-extent", true);
 
         private String baseLabel;
         private boolean isRedactable = false;
