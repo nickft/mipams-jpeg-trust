@@ -32,9 +32,6 @@ public class SoftBindingAssertion extends CborAssertion {
         return "c2pa.soft-binding";
     }
 
-    public SoftBindingAssertion() {
-    }
-
     public String getAlgorithm() {
         return algorithm;
     }
@@ -88,7 +85,29 @@ public class SoftBindingAssertion extends CborAssertion {
         return true;
     }
 
-    public class SoftBindingBlock {
+    public static class SoftBindingBlock {
+        SoftBindingScope scope;
+        String value;
+
+        public SoftBindingScope getScope() {
+            return scope;
+        }
+
+        public void setScope(SoftBindingScope scope) {
+            this.scope = scope;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+    }
+
+    public static class SoftBindingScope {
         private String extent;
         private SoftBindingTimespan timespan;
         private Region region;
@@ -119,7 +138,7 @@ public class SoftBindingAssertion extends CborAssertion {
 
     }
 
-    public class SoftBindingTimespan {
+    public static class SoftBindingTimespan {
         private int start;
         private int end;
 

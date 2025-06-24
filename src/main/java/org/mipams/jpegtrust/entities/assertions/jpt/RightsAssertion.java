@@ -1,4 +1,4 @@
-package org.mipams.jpegtrust.entities.assertions.cawg;
+package org.mipams.jpegtrust.entities.assertions.jpt;
 
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
 import org.mipams.jpegtrust.entities.assertions.Assertion;
@@ -8,13 +8,13 @@ import org.mipams.jumbf.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.services.content_types.JsonContentType;
 import org.mipams.jumbf.util.MipamsException;
 
-public class MetadataAssertion implements Assertion {
+public class RightsAssertion implements Assertion {
 
     private byte[] payload;
 
     @Override
     public String getLabel() {
-        return "cawg.metadata";
+        return "jpt.rights";
     }
 
     @Override

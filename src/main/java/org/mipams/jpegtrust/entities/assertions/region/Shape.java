@@ -70,7 +70,7 @@ public class Shape {
         this.vertices = vertices;
     }
 
-    public class Coordinate {
+    public static class Coordinate {
         private Float x;
         private Float y;
 

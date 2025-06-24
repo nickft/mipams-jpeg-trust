@@ -18,7 +18,6 @@ import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicatorsInterface;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimSignatureIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ManifestIndicators;
-import org.mipams.jpegtrust.jpeg_systems.JumbfUtils;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimSignatureContentType;
@@ -27,9 +26,9 @@ import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery;
 import org.mipams.jpegtrust.services.validation.discovery.ManifestDiscovery;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.services.CoreGeneratorService;
-import org.mipams.jumbf.util.CoreUtils;
+import org.mipams.jumbf.util.JumbfUriUtils;
 import org.mipams.jumbf.util.MipamsException;
-
+import org.mipams.privsec.services.content_types.ProtectionContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -74,6 +73,11 @@ public class ManifestConsumer {
         try {
             try {
                 currentManifest = JpegTrustUtils.locateManifestOnManifestStore(manifestUuid, manifestStoreJumbfBox);
+
+                if ((new ProtectionContentType()).getContentTypeUuid()
+                        .equals(currentManifest.getDescriptionBox().getUuid())) {
+                    throw new MipamsException();
+                }
             } catch (MipamsException e) {
                 throw new ValidationException(ValidationCode.MANIFEST_INACCESSIBLE);
             }
@@ -146,13 +150,13 @@ public class ManifestConsumer {
             for (HashedUriReference ref : referencedAssertions) {
                 String absoluteAssertionJumbfUri = ref.getUrl();
 
-                if (!JumbfUtils.isJumbfUriAbsolute(ref.getUrl())) {
+                if (!JumbfUriUtils.isJumbfUriAbsolute(ref.getUrl())) {
                     absoluteAssertionJumbfUri = JpegTrustUtils.getProvenanceJumbfURL(
-                            manifestUuid, JumbfUtils.extractJumbfFragmentFromUri(ref.getUrl()));
+                            manifestUuid, JpegTrustUtils.extractJumbfFragmentFromUri(ref.getUrl()));
                 }
 
-                Optional<JumbfBox> assertionJumbfBox = JumbfUtils.searchJumbfBox(manifestStoreJumbfBox,
-                        absoluteAssertionJumbfUri);
+                Optional<JumbfBox> assertionJumbfBox = JumbfUriUtils
+                        .getJumbfBoxFromAbsoluteUri(absoluteAssertionJumbfUri, manifestStoreJumbfBox);
 
                 if (assertionJumbfBox.isEmpty()) {
                     throw new ValidationException(ValidationCode.GENERAL_ERROR);
@@ -198,8 +202,10 @@ public class ManifestConsumer {
 
     public HashSet<String> extractRedactedAssertions(String manifestUuid, JumbfBox manifestStoreJumbfBox)
             throws MipamsException {
-        final JumbfBox currentManifest = CoreUtils.locateJumbfBoxFromLabel(manifestStoreJumbfBox.getContentBoxList()
-                .stream().map(box -> (JumbfBox) box).collect(Collectors.toList()), manifestUuid);
+        String manifestUri = String.format("%s/%s/%s", JumbfUriUtils.SELF_CONTAINED_URI,
+                manifestStoreJumbfBox.getDescriptionBox().getLabel(), manifestUuid);
+        final JumbfBox currentManifest = JumbfUriUtils.getJumbfBoxFromAbsoluteUri(manifestUri,
+                manifestStoreJumbfBox).orElseThrow();
         return claimConsumer.extractRedactedAssertions(currentManifest);
     }
 
@@ -215,10 +221,10 @@ public class ManifestConsumer {
 
     public Map<String, HashedUriReference> getIngredientManifests(String manifestUuid,
             JumbfBox manifestStoreJumbfBox) throws MipamsException {
-        final JumbfBox currentManifest = CoreUtils.locateJumbfBoxFromLabel(
-                manifestStoreJumbfBox.getContentBoxList().stream()
-                        .map(box -> (JumbfBox) box).collect(Collectors.toList()),
-                manifestUuid);
+        String manifestUri = String.format("%s/%s/%s", JumbfUriUtils.SELF_CONTAINED_URI,
+                manifestStoreJumbfBox.getDescriptionBox().getLabel(), manifestUuid);
+        final JumbfBox currentManifest = JumbfUriUtils.getJumbfBoxFromAbsoluteUri(manifestUri,
+                manifestStoreJumbfBox).orElseThrow();
 
         List<Assertion> ingredientAssertions = assertionConsumer.collectIngredientAssertions(currentManifest);
 
@@ -256,7 +262,7 @@ public class ManifestConsumer {
                     .extractTargetManifestFromIngredient(assertionConsumer
                             .collectIngredientAssertions(currentManifest).getFirst())
                     .getUrl();
-            Optional<JumbfBox> result = JumbfUtils.searchJumbfBox(manifestStoreJumbfBox, url);
+            Optional<JumbfBox> result = JumbfUriUtils.getJumbfBoxFromAbsoluteUri(url, manifestStoreJumbfBox);
             if (result.isEmpty()) {
                 throw new ValidationException();
             }

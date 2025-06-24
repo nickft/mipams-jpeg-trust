@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -22,7 +21,6 @@ import org.mipams.jpegtrust.cose.CoseUtils;
 import org.mipams.jpegtrust.entities.assertions.Assertion;
 import org.mipams.jpegtrust.entities.assertions.ExclusionRange;
 import org.mipams.jpegtrust.entities.validation.ValidationCode;
-import org.mipams.jpegtrust.jpeg_systems.JumbfUtils;
 import org.mipams.jpegtrust.jpeg_systems.SaltHashBox;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ProvenanceContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.TrustRecordContentType;
@@ -34,6 +32,7 @@ import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.services.CoreGeneratorService;
 import org.mipams.jumbf.util.CoreUtils;
+import org.mipams.jumbf.util.JumbfUriUtils;
 import org.mipams.jumbf.util.MipamsException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -150,14 +149,6 @@ public class JpegTrustUtils {
         }
     }
 
-    public static String getClaimContentBase64(JumbfBox trustRecord) throws MipamsException {
-        Optional<JumbfBox> jumbfBoxClaim = JumbfUtils.searchJumbfBox(
-                (JumbfBox) trustRecord.getContentBoxList().getFirst(), "self#jumbf=c2pa.claim");
-        final CborBox contentBox = (CborBox) jumbfBoxClaim.get().getContentBoxList().getFirst();
-
-        return Base64.getEncoder().encodeToString(contentBox.getContent());
-    }
-
     public static JumbfBox buildTrustRecord(JumbfBox... manifests) throws MipamsException {
         JumbfBoxBuilder manifestStore = new JumbfBoxBuilder(new TrustRecordContentType());
         manifestStore.setJumbfBoxAsRequestable();
@@ -179,13 +170,11 @@ public class JpegTrustUtils {
     }
 
     public static Optional<JumbfBox> locateManifestFromUri(JumbfBox manifestStoreJumbfBox,
-            String targetManifestUri) throws MipamsException {
+            String targetManifestLabel) throws MipamsException {
         try {
-            return Optional
-                    .of(CoreUtils.locateJumbfBoxFromLabel(
-                            manifestStoreJumbfBox.getContentBoxList().stream()
-                                    .map(box -> (JumbfBox) box).collect(Collectors.toList()),
-                            targetManifestUri));
+            String targetManifestUri = String.format("%s/%s/%s", JumbfUriUtils.SELF_CONTAINED_URI,
+                    manifestStoreJumbfBox.getDescriptionBox().getLabel(), targetManifestLabel);
+            return JumbfUriUtils.getJumbfBoxFromAbsoluteUri(targetManifestUri, manifestStoreJumbfBox);
         } catch (MipamsException e) {
             return Optional.empty();
         }
@@ -299,10 +288,10 @@ public class JpegTrustUtils {
 
     public static JumbfBox locateManifestOnManifestStore(String manifestUuid, JumbfBox manifestStoreJumbfBox)
             throws MipamsException {
-        return CoreUtils.locateJumbfBoxFromLabel(
-                manifestStoreJumbfBox.getContentBoxList().stream()
-                        .map(box -> (JumbfBox) box).collect(Collectors.toList()),
-                manifestUuid);
+        String manifestUri = String.format("%s/%s/%s", JumbfUriUtils.SELF_CONTAINED_URI,
+                manifestStoreJumbfBox.getDescriptionBox().getLabel(), manifestUuid);
+        return JumbfUriUtils.getJumbfBoxFromAbsoluteUri(manifestUri,
+                manifestStoreJumbfBox).orElseThrow();
     }
 
     public static Map<String, Long> computeDuplicateLabelOccurrenceMap(List<JumbfBox> boxList) {
@@ -310,5 +299,43 @@ public class JpegTrustUtils {
                 .collect(Collectors.groupingBy(DescriptionBox::getLabel, Collectors.counting())).entrySet().stream()
                 .filter(entry -> entry.getValue() >= 2)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    public static String extractJumbfFragmentFromUri(String url) {
+        String[] result = url.split("#jumbf=");
+
+        if (result == null || result.length != 2) {
+            return null;
+        }
+
+        return result[1];
+    }
+
+    public static long getSizeOfJumbfInApp11SegmentsInBytes(JumbfBox jumbfBox)
+            throws MipamsException {
+        long jumbfBoxSize = (jumbfBox.getBoxSizeFromBmffHeaders() > 0) ? jumbfBox.getBoxSizeFromBmffHeaders()
+                : jumbfBox.getBoxSize();
+
+        if (jumbfBoxSize == 0) {
+            throw new MipamsException(
+                    "Cannot know the size of JUMBF Box in advance. LBox equals to 0.");
+        }
+
+        long jumbfBoxHeaderSize = CoreUtils.INT_BYTE_SIZE * 2;
+        jumbfBoxHeaderSize += jumbfBox.isXBoxEnabled() ? CoreUtils.LONG_BYTE_SIZE : 0;
+
+        final int totalSegments = (int) Math.ceil((double) jumbfBoxSize / CoreUtils.MAX_APP_SEGMENT_SIZE);
+
+        final int app11MarkerSize = CoreUtils.WORD_BYTE_SIZE;
+        final int segmentLengthSize = CoreUtils.WORD_BYTE_SIZE;
+        final int commonIdentifierSize = CoreUtils.WORD_BYTE_SIZE;
+        final int boxInstanceNumberSize = CoreUtils.WORD_BYTE_SIZE;
+        final int packetSequenceSize = CoreUtils.INT_BYTE_SIZE;
+
+        final long jpegXtHeaderSize = app11MarkerSize + segmentLengthSize + commonIdentifierSize
+                + boxInstanceNumberSize + packetSequenceSize + jumbfBoxHeaderSize;
+
+        long totalApp11SegmentsSize = jpegXtHeaderSize - jumbfBoxHeaderSize + jpegXtHeaderSize * (totalSegments - 1);
+        return totalApp11SegmentsSize + jumbfBoxSize;
     }
 }

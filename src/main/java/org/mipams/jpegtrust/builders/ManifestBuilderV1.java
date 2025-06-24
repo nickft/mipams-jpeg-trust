@@ -28,6 +28,7 @@ import org.mipams.jumbf.entities.JumbfBoxBuilder;
 import org.mipams.jumbf.services.CoreGeneratorService;
 import org.mipams.jumbf.util.CoreUtils;
 import org.mipams.jumbf.util.MipamsException;
+import org.mipams.privsec.config.PrivsecConfig;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -93,6 +94,17 @@ public class ManifestBuilderV1 {
             claim.setRedactedAssertions(new LinkedHashSet<>());
         }
 
+        claim.getRedactedAssertions().add(jumbfUriReference);
+
+        return this;
+    }
+
+    public ManifestBuilderV1 addProtectedAssertion(JumbfBox protectedAssertion) throws MipamsException {
+        if (protectedAssertion.getDescriptionBox().getLabel() == null) {
+            throw new MipamsException(String.format("Assertion with no label %s", protectedAssertion.toString()));
+        }
+
+        assertionMap.add(protectedAssertion);
         return this;
     }
 
@@ -116,6 +128,11 @@ public class ManifestBuilderV1 {
         return this;
     }
 
+    public ManifestBuilderV1 setAlgorithm(String hashingAlgorithm) throws MipamsException {
+        this.claim.setAlgorithm(hashingAlgorithm);
+        return this;
+    }
+
     public byte[] encodeClaimToBeSigned() throws MipamsException {
         try {
             ensureLabelUniquenessInAssertionStore();
@@ -135,6 +152,7 @@ public class ManifestBuilderV1 {
             hashedUriReference.setUrl(
                     String.format("self#jumbf=c2pa.assertions/%s", assertionJumbfBox.getDescriptionBox().getLabel()));
             hashedUriReference.setDigest(locallyComputedHash);
+            hashedUriReference.setAlgorithm("sha256");
 
             this.claim.getAssertions().add(hashedUriReference);
         }
@@ -203,8 +221,8 @@ public class ManifestBuilderV1 {
         jumbfBoxBuilder.setJumbfBoxAsRequestable();
         jumbfBoxBuilder.setLabel(claimSignatureContentType.getLabel());
 
-        final byte[] coseSign1 =
-                CoseUtils.toCoseSign1EncodedBytestream(this.claimSignatureCertificates, this.claimSignature);
+        final byte[] coseSign1 = CoseUtils.toCoseSign1EncodedBytestream(this.claimSignatureCertificates,
+                this.claimSignature);
 
         CborBox cborBox = new CborBox();
         cborBox.setContent(coseSign1);
@@ -229,8 +247,8 @@ public class ManifestBuilderV1 {
             String tempFile = CoreUtils.randomStringGenerator();
             tempFilePath = CoreUtils.createTempFile(tempFile, CoreUtils.JUMBF_FILENAME_SUFFIX);
 
-            ApplicationContext context =
-                    new AnnotationConfigApplicationContext(JpegTrustConfig.class, JumbfConfig.class);
+            ApplicationContext context = new AnnotationConfigApplicationContext(JpegTrustConfig.class,
+                    JumbfConfig.class, PrivsecConfig.class);
             CoreGeneratorService coreGeneratorService = context.getBean(CoreGeneratorService.class);
             coreGeneratorService.generateJumbfMetadataToFile(List.of(jumbfBox), tempFilePath);
 

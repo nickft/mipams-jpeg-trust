@@ -80,6 +80,10 @@ public class ManifestStoreConsumer {
 
             trustIndicatorSet.getManifests().add(manifestIndicators);
 
+            if (manifestIndicators.getAssertions().isEmpty()) {
+                continue;
+            }
+
             redactedAssertions.addAll(manifestConsumer.extractRedactedAssertions(manifestUuid,
                     manifestStoreJumbfBox));
 

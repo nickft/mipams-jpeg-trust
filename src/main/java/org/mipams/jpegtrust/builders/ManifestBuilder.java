@@ -112,6 +112,17 @@ public class ManifestBuilder {
             claim.setRedactedAssertions(new LinkedHashSet<>());
         }
 
+        claim.getRedactedAssertions().add(jumbfUriReference);
+
+        return this;
+    }
+
+    public ManifestBuilder addProtectedAssertion(JumbfBox protectedAssertion) throws MipamsException {
+        if (protectedAssertion.getDescriptionBox().getLabel() == null) {
+            throw new MipamsException(String.format("Assertion with no label %s", protectedAssertion.toString()));
+        }
+
+        createdAssertions.add(protectedAssertion);
         return this;
     }
 
@@ -127,6 +138,11 @@ public class ManifestBuilder {
 
     public ManifestBuilder setGeneratorInfoName(String generatorInfoName) throws MipamsException {
         this.claim.getClaimGeneratorInfo().put("name", generatorInfoName);
+        return this;
+    }
+
+    public ManifestBuilder setAlgorithm(String hashingAlgorithm) throws MipamsException {
+        this.claim.setAlgorithm(hashingAlgorithm);
         return this;
     }
 

@@ -1,12 +1,13 @@
 package org.mipams.jpegtrust.entities.assertions.region;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.mipams.jpegtrust.entities.assertions.enums.RoleChoice;
 import org.mipams.jpegtrust.entities.assertions.metadata.AssertionMetadata;
 
 public class Region {
-    List<Range> range;
+    List<Range> region = new ArrayList<>();
     String name;
     String identifier;
     String type;
@@ -14,12 +15,12 @@ public class Region {
     String description;
     AssertionMetadata metadata;
 
-    public List<Range> getRange() {
-        return range;
+    public List<Range> getRegion() {
+        return region;
     }
 
-    public void setRange(List<Range> range) {
-        this.range = range;
+    public void setRegion(List<Range> region) {
+        this.region = region;
     }
 
     public String getName() {

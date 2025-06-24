@@ -2,6 +2,7 @@ package org.mipams.jpegtrust.services.validation.consumer;
 
 import org.mipams.jumbf.entities.CborBox;
 import org.mipams.jumbf.entities.JumbfBox;
+import org.mipams.jumbf.util.JumbfUriUtils;
 import org.mipams.jumbf.util.MipamsException;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -17,7 +18,6 @@ import org.mipams.jpegtrust.entities.validation.ValidationException;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicatorsInterface;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimV1Indicators;
-import org.mipams.jpegtrust.jpeg_systems.JumbfUtils;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimContentType;
 import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery.MipamsAssertion;
 import org.springframework.stereotype.Service;
@@ -29,10 +29,10 @@ public class ClaimConsumer {
         CborBox claimCborBox = (CborBox) claimJumbfBox.getContentBoxList().get(0);
         try {
 
-            if (claimJumbfBox.getDescriptionBox().getLabel().startsWith(new ClaimContentType().getLabelV1())) {
-                return CoseUtils.toClaimV1(claimCborBox.getContent());
-            } else if (claimJumbfBox.getDescriptionBox().getLabel().startsWith(new ClaimContentType().getLabel())) {
+            if (claimJumbfBox.getDescriptionBox().getLabel().startsWith(new ClaimContentType().getLabel())) {
                 return CoseUtils.toClaim(claimCborBox.getContent());
+            } else if (claimJumbfBox.getDescriptionBox().getLabel().startsWith(new ClaimContentType().getLabelV1())) {
+                return CoseUtils.toClaimV1(claimCborBox.getContent());
             } else {
                 throw new ValidationException(ValidationCode.CLAIM_CBOR_MALFORMED);
             }
@@ -77,7 +77,7 @@ public class ClaimConsumer {
 
         boolean selfRedactedAssertions = result.stream()
                 .filter(uri -> uri.contains(
-                        JpegTrustUtils.getProvenanceJumbfURL(manifestLabel)) || !JumbfUtils.isJumbfUriAbsolute(uri))
+                        JpegTrustUtils.getProvenanceJumbfURL(manifestLabel)) || !JumbfUriUtils.isJumbfUriAbsolute(uri))
                 .count() > 0;
 
         if (selfRedactedAssertions) {
@@ -112,16 +112,16 @@ public class ClaimConsumer {
                 }
             }
 
-            String absolutePath = (JumbfUtils.isJumbfUriAbsolute(ref.getUrl())) ? ref.getUrl()
+            String absolutePath = (JumbfUriUtils.isJumbfUriAbsolute(ref.getUrl())) ? ref.getUrl()
                     : JpegTrustUtils.getProvenanceJumbfURL(manifestUuid,
-                            JumbfUtils.extractJumbfFragmentFromUri(ref.getUrl()));
+                            JpegTrustUtils.extractJumbfFragmentFromUri(ref.getUrl()));
 
             if (!redactedAssertions.contains(absolutePath)) {
                 continue;
             }
 
             MipamsAssertion assertionType = MipamsAssertion
-                    .getTypeFromLabel(JpegTrustUtils.getLabelFromManifestUri(absolutePath));
+                    .getTypeFromLabel(absolutePath.substring(absolutePath.lastIndexOf("/") + 1));
 
             if (assertionType == null) {
                 continue;

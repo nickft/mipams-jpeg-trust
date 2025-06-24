@@ -27,7 +27,6 @@ import org.mipams.jpegtrust.entities.assertions.actions.ActionAssertion;
 import org.mipams.jpegtrust.entities.assertions.actions.ActionsAssertion;
 import org.mipams.jpegtrust.entities.assertions.enums.ActionChoice;
 import org.mipams.jpegtrust.entities.validation.trustindicators.TrustIndicatorSet;
-import org.mipams.jpegtrust.jpeg_systems.JumbfUtils;
 import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentType;
 import org.mipams.jpegtrust.services.validation.consumer.ManifestStoreConsumer;
 import org.mipams.jumbf.config.JumbfConfig;
@@ -126,7 +125,7 @@ public class TrustIndicatorsTest {
         builder.setClaimSignatureCertificates(getCertificate());
 
         JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-        long totalBytesRequired = JumbfUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
 
         byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
         contentBindingAssertion.setDigest(digest);

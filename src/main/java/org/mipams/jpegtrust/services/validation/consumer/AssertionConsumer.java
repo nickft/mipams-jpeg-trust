@@ -147,10 +147,12 @@ public class AssertionConsumer {
             }
 
             if (Arrays.equals(computedUriReference.getDigest(), claimedUriReference.getDigest())) {
-                validationReport.put(JpegTrustUtils.getLabelFromManifestUri(absolutePrefix),
+                validationReport.put(
+                        claimedUriReference.getUrl().substring(claimedUriReference.getUrl().lastIndexOf("/") + 1),
                         ValidationCode.ASSERTION_HASHED_URI_MATCH.getCode());
             } else {
-                validationReport.put(JpegTrustUtils.getLabelFromManifestUri(absolutePrefix),
+                validationReport.put(
+                        claimedUriReference.getUrl().substring(claimedUriReference.getUrl().lastIndexOf("/") + 1),
                         ValidationCode.HASHED_URI_MISMATCH.getCode());
             }
         }

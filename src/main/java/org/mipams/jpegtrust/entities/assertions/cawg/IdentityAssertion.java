@@ -1,5 +1,6 @@
 package org.mipams.jpegtrust.entities.assertions.cawg;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.mipams.jpegtrust.entities.HashedUriReference;
@@ -64,10 +65,10 @@ public class IdentityAssertion extends CborAssertion {
         return "cawg.identity";
     }
 
-    public class SignerPayload {
+    public static class SignerPayload {
 
         @JsonProperty("referenced_assertions")
-        private List<HashedUriReference> referencedAssertions;
+        private LinkedHashSet<HashedUriReference> referencedAssertions;
 
         @JsonProperty("sig_type")
         private String signingType;
@@ -84,11 +85,11 @@ public class IdentityAssertion extends CborAssertion {
         @JsonProperty("expected_countersigners")
         private List<ExpectedCounterSigner> expectedCounterSigners;
 
-        public List<HashedUriReference> getReferencedAssertions() {
+        public LinkedHashSet<HashedUriReference> getReferencedAssertions() {
             return referencedAssertions;
         }
 
-        public void setReferencedAssertions(List<HashedUriReference> referencedAssertions) {
+        public void setReferencedAssertions(LinkedHashSet<HashedUriReference> referencedAssertions) {
             this.referencedAssertions = referencedAssertions;
         }
 
@@ -132,7 +133,7 @@ public class IdentityAssertion extends CborAssertion {
             this.expectedCounterSigners = expectedCounterSigners;
         }
 
-        public class HashMap {
+        public static class HashMap {
 
             @JsonProperty("alg")
             private String hashAlgorithm;
@@ -157,7 +158,7 @@ public class IdentityAssertion extends CborAssertion {
             }
         }
 
-        public class ExpectedCounterSigner {
+        public static class ExpectedCounterSigner {
 
             @JsonProperty("partial_signer_payload")
             private SignerPayload partialSignerPayload;

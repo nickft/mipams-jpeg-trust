@@ -78,8 +78,8 @@ public class CoseUtils {
 
         COSEProtectedHeader protectedHeader = builder.build();
 
-        SigStructure structure =
-                new SigStructureBuilder().signature1().bodyAttributes(protectedHeader).payload(payload).build();
+        SigStructure structure = new SigStructureBuilder().signature1().bodyAttributes(protectedHeader).payload(payload)
+                .build();
 
         return structure.encode();
     }
@@ -101,9 +101,9 @@ public class CoseUtils {
                     .x5chain(claimSignatureCertificates).build();
 
             final int defaultPadSize = 5 * 1024;
-            int paddingSize =
-                    (claimSignature != null && claimSignature.length > 0) ? defaultPadSize - claimSignature.length - 1
-                            : defaultPadSize;
+            int paddingSize = (claimSignature != null && claimSignature.length > 0)
+                    ? defaultPadSize - claimSignature.length - 1
+                    : defaultPadSize;
             byte[] pad = new byte[paddingSize];
             Arrays.fill(pad, Byte.valueOf("0"));
 
@@ -158,8 +158,6 @@ public class CoseUtils {
         }
     }
 
-
-
     public static BindingAssertion toBindingAsserion(byte[] content)
             throws StreamReadException, DatabindException, IOException {
         ObjectMapper mapper = new CBORMapper();
@@ -174,5 +172,16 @@ public class CoseUtils {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         return mapper.readValue(content, ActionsAssertion.class);
+    }
+
+    public static byte[] toIdentityAssertionCose(byte[] vcEncoded, byte[] signaturePayload) {
+        COSEProtectedHeader protectedHeader = new COSEProtectedHeaderBuilder().alg(COSEAlgorithms.ES256)
+                .contentType("application/vc").build();
+
+        COSESign1 coseSign1 = new COSESign1Builder().protectedHeader(protectedHeader).payload(vcEncoded)
+                .signature(signaturePayload).build();
+
+        CBORTaggedItem item = new CBORTaggedItem(18, coseSign1);
+        return item.encode();
     }
 }

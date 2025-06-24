@@ -25,7 +25,6 @@ import org.mipams.jpegtrust.entities.assertions.actions.ActionsAssertionV1;
 import org.mipams.jpegtrust.entities.assertions.actions.ParametersMap;
 import org.mipams.jpegtrust.entities.assertions.enums.ActionChoice;
 import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertionV1;
-import org.mipams.jpegtrust.jpeg_systems.JumbfUtils;
 import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.TrustDeclarationContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.TrustRecordContentType;
@@ -47,7 +46,7 @@ import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class})
+@ContextConfiguration(classes = { JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class })
 @ActiveProfiles("test")
 public class Jpeg1ClaimGeneratorTest {
 
@@ -67,10 +66,8 @@ public class Jpeg1ClaimGeneratorTest {
     void testGenerationOfTrustRecord() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
-        String initialAssetFileUrl =
-                ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
 
         String assetFileUrl = initialAssetFileUrl.replace("sample", "test-sample");
         jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
@@ -114,7 +111,7 @@ public class Jpeg1ClaimGeneratorTest {
         String targetFileUrl = assetFileUrl.replace(".jpeg", "-standard-manifest.jpeg");
 
         JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-        long totalBytesRequired = JumbfUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
 
         // include exclusion range and adjust padding of content binding
         byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl);
@@ -147,10 +144,8 @@ public class Jpeg1ClaimGeneratorTest {
     void testGenerationOfTrustDeclaration() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
-        String initialAssetFileUrl =
-                ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
 
         String assetFileUrl = initialAssetFileUrl.replace("sample", "test-sample");
         jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
@@ -184,7 +179,7 @@ public class Jpeg1ClaimGeneratorTest {
         String targetFileUrl = assetFileUrl.replace(".jpeg", "-trust-declaration.jpeg");
 
         JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-        long totalBytesRequired = JumbfUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
 
         // include exclusion range and adjust padding of content binding
         byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
@@ -224,10 +219,8 @@ public class Jpeg1ClaimGeneratorTest {
     void testGenerationOfTrustRecordWithIngredientAssertion() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
-        String initialAssetFileUrl =
-                ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
         String assetFileUrl = initialAssetFileUrl.replace("sample", "test-sample");
         jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
                 new TrustRecordContentType().getContentTypeUuid());
@@ -266,9 +259,8 @@ public class Jpeg1ClaimGeneratorTest {
         builder.addAssertion(contentBindingAssertion);
         builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
 
-        JumbfBox tempTrustRecord =
-                JpegTrustUtils.buildTrustRecord(builder.build(), ingredientManifest);
-        long totalBytesRequired = JumbfUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build(), ingredientManifest);
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
 
         byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
         contentBindingAssertion.setDigest(digest);
@@ -333,7 +325,7 @@ public class Jpeg1ClaimGeneratorTest {
         builder.setClaimSignatureCertificates(getCertificate());
 
         JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-        long totalBytesRequired = JumbfUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
 
         byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
         contentBindingAssertion.setDigest(digest);

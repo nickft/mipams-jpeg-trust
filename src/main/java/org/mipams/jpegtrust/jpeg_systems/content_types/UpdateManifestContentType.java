@@ -13,9 +13,9 @@ import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertionV
 import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertionV2;
 import org.mipams.jpegtrust.entities.validation.ValidationCode;
 import org.mipams.jpegtrust.entities.validation.ValidationException;
-import org.mipams.jpegtrust.jpeg_systems.JumbfUtils;
 import org.mipams.jpegtrust.services.validation.consumer.AssertionConsumer;
 import org.mipams.jumbf.entities.JumbfBox;
+import org.mipams.jumbf.util.JumbfUriUtils;
 import org.mipams.jumbf.util.MipamsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,19 +64,19 @@ public class UpdateManifestContentType extends TrustManifestContentType {
 
         if (assertion.getClass().equals(IngredientAssertion.class)) {
             IngredientAssertion ingr = (IngredientAssertion) assertion;
-            if (!JumbfUtils.isJumbfUriReferenceValid(ingr.getActiveManifestOfIngredient().getUrl())
-                    || !JumbfUtils.isJumbfUriReferenceValid(ingr.getClaimSignatureOfIngredient().getUrl())) {
+            if (!JumbfUriUtils.isJumbfUriReferenceValid(ingr.getActiveManifestOfIngredient().getUrl())
+                    || !JumbfUriUtils.isJumbfUriReferenceValid(ingr.getClaimSignatureOfIngredient().getUrl())) {
                 throw new ValidationException(ValidationCode.MANIFEST_UPDATE_WRONG_PARENTS);
             }
 
         } else if (assertion.getClass().equals(IngredientAssertionV2.class)) {
             IngredientAssertionV2 ingr = (IngredientAssertionV2) assertion;
-            if (!JumbfUtils.isJumbfUriReferenceValid(ingr.getIngredientReference().getUrl())) {
+            if (!JumbfUriUtils.isJumbfUriReferenceValid(ingr.getIngredientReference().getUrl())) {
                 throw new ValidationException(ValidationCode.MANIFEST_UPDATE_WRONG_PARENTS);
             }
         } else if (assertion.getClass().equals(IngredientAssertionV1.class)) {
             IngredientAssertionV1 ingr = (IngredientAssertionV1) assertion;
-            if (!JumbfUtils.isJumbfUriReferenceValid(ingr.getManifestReference().getUrl())) {
+            if (!JumbfUriUtils.isJumbfUriReferenceValid(ingr.getManifestReference().getUrl())) {
                 throw new ValidationException(ValidationCode.MANIFEST_UPDATE_WRONG_PARENTS);
             }
         } else {

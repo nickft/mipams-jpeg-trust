@@ -43,7 +43,8 @@ public class AssertionDiscovery {
         METADATA("c2pa.metadata", true),
         CLAIM_THUMBNAIL("c2pa.thumbnail.claim", true),
         INGREDIENT_THUMBNAIL("c2pa.thumbnail.ingredient", true),
-        EXTENT_OF_MODIFICATION("jpt.mod-extent", true);
+        JPT_EXTENT_OF_MODIFICATION("jpt.mod-extent", true),
+        JPT_RIGHTS("jpt.rights", true);
 
         private String baseLabel;
         private boolean isRedactable = false;
