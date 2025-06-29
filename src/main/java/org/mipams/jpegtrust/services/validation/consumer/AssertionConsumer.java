@@ -117,8 +117,23 @@ public class AssertionConsumer {
     }
 
     public Map<String, String> validateAssertionsIntegrityAndGetAssertionStatus(String manifestId,
-            LinkedHashSet<HashedUriReference> assertionReferenceList, JumbfBox manifestStoreJumbfBox)
-            throws ValidationException {
+            Optional<String> claimHashAlgorithm, LinkedHashSet<HashedUriReference> assertionReferenceList,
+            JumbfBox manifestStoreJumbfBox) throws ValidationException {
+
+        Map<String, HashedUriReference> uriToReferenceMap = new HashMap<>();
+        String absolutePrefix = JpegTrustUtils.getProvenanceJumbfURL(manifestId);
+
+        if (claimHashAlgorithm.isPresent() && !claimHashAlgorithm.get().equals("sha256")) {
+            throw new ValidationException(ValidationCode.ALGORITHM_UNSUPPORTED);
+        }
+
+        if (claimHashAlgorithm.isEmpty()
+                && assertionReferenceList.stream().filter(ref -> ref.getAlgorithm() == null).count() > 0) {
+            throw new ValidationException(ValidationCode.ASSERTION_DATA_HASH_MALFORMED);
+        }
+
+        assertionReferenceList.forEach(assertionRef -> uriToReferenceMap
+                .put(assertionRef.getUrl().replace("self#jumbf=", absolutePrefix + "/"), assertionRef));
 
         List<HashedUriReference> computedUriReferenceList;
         try {
@@ -130,11 +145,6 @@ public class AssertionConsumer {
         } catch (MipamsException e) {
             throw new ValidationException(ValidationCode.GENERAL_ERROR, e);
         }
-
-        Map<String, HashedUriReference> uriToReferenceMap = new HashMap<>();
-        String absolutePrefix = JpegTrustUtils.getProvenanceJumbfURL(manifestId);
-        assertionReferenceList.forEach(assertionRef -> uriToReferenceMap
-                .put(assertionRef.getUrl().replace("self#jumbf=", absolutePrefix + "/"), assertionRef));
 
         HashMap<String, String> validationReport = new HashMap<>();
 

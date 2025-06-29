@@ -152,7 +152,6 @@ public class ManifestBuilderV1 {
             hashedUriReference.setUrl(
                     String.format("self#jumbf=c2pa.assertions/%s", assertionJumbfBox.getDescriptionBox().getLabel()));
             hashedUriReference.setDigest(locallyComputedHash);
-            hashedUriReference.setAlgorithm("sha256");
 
             this.claim.getAssertions().add(hashedUriReference);
         }

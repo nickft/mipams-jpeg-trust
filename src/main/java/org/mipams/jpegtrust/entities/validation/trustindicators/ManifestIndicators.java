@@ -11,7 +11,7 @@ public class ManifestIndicators implements ManifestIndicatorsInterface {
 
     ClaimIndicatorsInterface claim;
 
-    ClaimSignatureIndicators signature;
+    ClaimSignatureIndicators claimSignature;
 
     public Map<String, Assertion> getAssertions() {
         return assertions;
@@ -29,11 +29,11 @@ public class ManifestIndicators implements ManifestIndicatorsInterface {
         this.claim = claim;
     }
 
-    public ClaimSignatureIndicators getSignature() {
-        return signature;
+    public ClaimSignatureIndicators getClaimSignature() {
+        return claimSignature;
     }
 
-    public void setSignature(ClaimSignatureIndicators signature) {
-        this.signature = signature;
+    public void setClaimSignature(ClaimSignatureIndicators claimSignature) {
+        this.claimSignature = claimSignature;
     }
 }

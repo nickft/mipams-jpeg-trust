@@ -6,6 +6,7 @@ import org.mipams.jumbf.util.JumbfUriUtils;
 import org.mipams.jumbf.util.MipamsException;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.TreeSet;
 import org.mipams.jpegtrust.cose.CoseUtils;
 import org.mipams.jpegtrust.entities.Claim;
@@ -42,7 +43,6 @@ public class ClaimConsumer {
     }
 
     public ClaimIndicatorsInterface buildClaimIndicatorSet(ProvenanceEntity claim) throws ValidationException {
-
         if (claim.getClass().equals(ClaimV1.class)) {
             return new ClaimV1Indicators((ClaimV1) claim);
         } else if (claim.getClass().equals(Claim.class)) {
@@ -133,5 +133,19 @@ public class ClaimConsumer {
         }
 
         return result;
+    }
+
+    public Optional<String> extractHashAlgorithmFromClaim(ProvenanceEntity claim) throws MipamsException {
+
+        String alg = null;
+        if (claim.getClass().equals(ClaimV1.class)) {
+            alg = ((ClaimV1) claim).getAlgorithm();
+        } else if (claim.getClass().equals(Claim.class)) {
+            alg = ((Claim) claim).getAlgorithm();
+        } else {
+            throw new ValidationException(ValidationCode.CLAIM_CBOR_INVALID);
+        }
+
+        return (alg != null) ? Optional.of(alg) : Optional.empty();
     }
 }

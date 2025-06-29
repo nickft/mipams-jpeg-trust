@@ -99,6 +99,8 @@ public class ManifestConsumer {
                 throw new ValidationException(ValidationCode.CLAIM_SIGNATURE_MISSING);
             }
 
+            Optional<String> claimHashAlgorithm = Optional.empty();
+
             try {
                 ProvenanceEntity claimStructureToBeSigned = claimConsumer.deserializeClaimJumbfBox(claimJumbfBox);
                 claimIndicators = claimConsumer.buildClaimIndicatorSet(claimStructureToBeSigned);
@@ -106,11 +108,12 @@ public class ManifestConsumer {
                         .buildClaimSignatureIndicatorSet(claimSignatureJumbfBox);
 
                 manifestIndicators.setClaim(claimIndicators);
-                manifestIndicators.setSignature(claimSignatureIndicators);
+                manifestIndicators.setClaimSignature(claimSignatureIndicators);
+                claimHashAlgorithm = claimConsumer
+                        .extractHashAlgorithmFromClaim(claimStructureToBeSigned);
 
                 try {
-                    claimSignatureConsumer.validateSignature(claimSignatureJumbfBox,
-                            claimStructureToBeSigned);
+                    claimSignatureConsumer.validateSignature(claimSignatureJumbfBox, claimStructureToBeSigned);
                     claimIndicators.setSignatureStatus(ValidationCode.CLAIM_SIGNATURE_VALIDATED);
                     String claimSignatureUri = JpegTrustUtils.getProvenanceJumbfURL(manifestUuid,
                             claimSignatureContentType.getLabel());
@@ -143,7 +146,7 @@ public class ManifestConsumer {
 
             claimIndicators.getAssertionStatus()
                     .putAll(assertionConsumer.validateAssertionsIntegrityAndGetAssertionStatus(manifestUuid,
-                            referencedAssertions, manifestStoreJumbfBox));
+                            claimHashAlgorithm, referencedAssertions, manifestStoreJumbfBox));
 
             int numberOfVisitedAssertions = 0;
 
