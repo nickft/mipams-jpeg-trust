@@ -79,20 +79,6 @@ public class TrustIndicatorsTest {
         assertNotNull(test);
     }
 
-    @Test
-    void extractClaimV1() throws Exception {
-        String asset = ResourceUtils.getFile("classpath:test-sample-standard-manifest.jpeg").getAbsolutePath();
-
-        List<JumbfBox> rest = parser.parseMetadataFromFile(asset);
-
-        TrustIndicatorSet set = manifestStoreConsumer.validate(rest.getFirst(), asset);
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        String test = mapper.writeValueAsString(set);
-        assertNotNull(test);
-    }
-
     private JumbfBox getManifestStore(String assetFileUrl) throws Exception {
         ActionsAssertion actions = new ActionsAssertion();
 

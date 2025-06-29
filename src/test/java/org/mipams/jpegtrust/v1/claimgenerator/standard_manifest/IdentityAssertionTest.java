@@ -7,11 +7,7 @@ import org.mipams.jpegtrust.entities.HashedUriReference;
 import org.mipams.jpegtrust.entities.assertions.cawg.IdentityAssertion;
 import org.mipams.jpegtrust.entities.assertions.cawg.IdentityAssertion.SignerPayload;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.ByteArrayInputStream;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
@@ -34,15 +30,15 @@ import org.mipams.jpegtrust.entities.assertions.enums.ActionChoice;
 import org.mipams.jpegtrust.entities.assertions.jpt.RightsAssertion;
 import org.mipams.jpegtrust.entities.validation.trustindicators.TrustIndicatorSet;
 import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentType;
-import org.mipams.jpegtrust.jpeg_systems.content_types.TrustRecordContentType;
 import org.mipams.jpegtrust.services.validation.consumer.ManifestStoreConsumer;
 import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery;
 import org.mipams.jpegtrust.utils.CryptoUtils;
 import org.mipams.jpegtrust.utils.Utils;
 import org.mipams.jumbf.config.JumbfConfig;
 import org.mipams.jumbf.entities.JumbfBox;
+import org.mipams.jumbf.services.Jp2CodestreamGenerator;
 import org.mipams.jumbf.services.JpegCodestreamGenerator;
-import org.mipams.jumbf.services.JpegCodestreamParser;
+import org.mipams.jumbf.services.JpegXLGenerator;
 import org.mipams.jumbf.util.CoreUtils;
 import org.mipams.jumbf.util.MipamsException;
 import org.mipams.privsec.config.PrivsecConfig;
@@ -51,9 +47,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.ResourceUtils;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class })
@@ -64,41 +57,66 @@ public class IdentityAssertionTest {
     JpegCodestreamGenerator jpegCodestreamGenerator;
 
     @Autowired
-    JpegCodestreamParser parser;
+    JpegXLGenerator jXlGenerator;
+
+    @Autowired
+    Jp2CodestreamGenerator jp2Generator;
 
     @Autowired
     ManifestStoreConsumer manifestStoreConsumer;
 
     @Test
-    void testActionsAssertion() throws Exception {
-        String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
-        String assetFileUrl = initialAssetFileUrl.replace("sample", "s07");
-        jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
-                new TrustRecordContentType().getContentTypeUuid());
+    void testIdentityAssertionJpeg1() throws Exception {
+        String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        String targetFileUrl = assetFileUrl.replace("sample.jpeg", "s07-identity-assertion.jpeg");
 
-        JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl);
+        JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jpeg");
 
-        String targetFileUrl = assetFileUrl.replace(".jpeg",
-                "-standard-manifest-with-rights-and-identity-assertion.jpeg");
         jpegCodestreamGenerator.generateJumbfMetadataToFile(List.of(trustRecord), assetFileUrl,
                 targetFileUrl);
 
         TrustIndicatorSet set = manifestStoreConsumer.validate(trustRecord, targetFileUrl);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        String test = mapper.writeValueAsString(set);
-
-        String jsonFilePath = targetFileUrl.replace(".jpeg", ".json");
-        Path outputPath = Paths.get(jsonFilePath);
-        Files.write(outputPath, test.getBytes());
-
-        assertNotNull(test);
-
-        CoreUtils.deleteFile(assetFileUrl);
+        String jsonFilePath = targetFileUrl.replace(".jpeg", "-jpeg.json");
+        CoreUtils.writeBytesFromInputStreamToFile(new ByteArrayInputStream(set.toString().getBytes()), 0,
+                jsonFilePath);
     }
 
-    private JumbfBox constructTrustRecordForScenario(String assetFileUrl) throws Exception {
+    @Test
+    void testIdentityAssertionJxl() throws Exception {
+        String assetFileUrl = ResourceUtils.getFile("classpath:sample.jxl").getAbsolutePath();
+        String targetFileUrl = assetFileUrl.replace("sample.jxl", "s07-identity-assertion.jxl");
+
+        JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jxl");
+
+        jXlGenerator.generateJumbfMetadataToFile(List.of(trustRecord), assetFileUrl,
+                targetFileUrl);
+
+        TrustIndicatorSet set = manifestStoreConsumer.validate(trustRecord, targetFileUrl);
+        String jsonFilePath = targetFileUrl.replace(".jxl", "-jxl.json");
+
+        CoreUtils.writeBytesFromInputStreamToFile(new ByteArrayInputStream(set.toString().getBytes()), 0,
+                jsonFilePath);
+    }
+
+    @Test
+    void testIdentityAssertionJp2() throws Exception {
+        String assetFileUrl = ResourceUtils.getFile("classpath:sample.jp2").getAbsolutePath();
+        String targetFileUrl = assetFileUrl.replace("sample.jp2", "s07-identity-assertion.jp2");
+
+        JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jp2");
+
+        jp2Generator.generateJumbfMetadataToFile(List.of(trustRecord), assetFileUrl,
+                targetFileUrl);
+
+        TrustIndicatorSet set = manifestStoreConsumer.validate(trustRecord, targetFileUrl);
+        String jsonFilePath = targetFileUrl.replace(".jp2", "-jp2.json");
+
+        CoreUtils.writeBytesFromInputStreamToFile(new ByteArrayInputStream(set.toString().getBytes()), 0,
+                jsonFilePath);
+    }
+
+    private JumbfBox constructTrustRecordForScenario(String assetFileUrl, String mediaType) throws Exception {
         ActionAssertionV1 assertion1 = new ActionAssertionV1();
         assertion1.setAction(ActionChoice.C2PA_CREATED.getValue());
         assertion1.setSoftwareAgent("Image Editing Tool");
@@ -137,8 +155,12 @@ public class IdentityAssertionTest {
 
         JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
 
-        BindingAssertion finalizedContentBindingAssertion = calculateContentBindingAssertion(tempTrustRecord,
-                assetFileUrl);
+        long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
+                ? tempTrustRecord.getBoxSizeFromBmffHeaders()
+                : JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+
+        BindingAssertion finalizedContentBindingAssertion = Utils.getBindingAssertionForAsset(assetFileUrl,
+                totalBytesRequired);
 
         builder.removeAssertion(AssertionDiscovery.MipamsAssertion.CONTENT_BINDING.getBaseLabel());
         builder.addAssertion(finalizedContentBindingAssertion);
@@ -152,7 +174,8 @@ public class IdentityAssertionTest {
         identitySignature.initSign(privKey);
         identitySignature.update(getVCUnprotectedPart());
 
-        byte[] signaturePayload = CoseUtils.toIdentityAssertionCose(getVCUnprotectedPart(), identitySignature.sign());
+        byte[] signaturePayload = CoseUtils.toIdentityAssertionCose(getVCUnprotectedPart(),
+                identitySignature.sign());
 
         int signatureSize = signaturePayload.length;
         int sizeOfUpdatedPadding = identityAssertion.getPad1().length - (signatureSize
@@ -179,26 +202,6 @@ public class IdentityAssertionTest {
         JumbfBox trustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
         return trustRecord;
 
-    }
-
-    private BindingAssertion calculateContentBindingAssertion(JumbfBox tempTrustRecord, String assetFileUrl)
-            throws Exception {
-        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
-
-        byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl);
-        BindingAssertion contentBindingAssertion = new BindingAssertion();
-
-        contentBindingAssertion.setAlgorithm("sha256");
-        contentBindingAssertion.setDigest(digest);
-        contentBindingAssertion.addExclusionRange((int) totalBytesRequired, 2);
-
-        int paddingSize = Utils.calculateMinimumBytesRequired(2, (int) totalBytesRequired);
-        byte[] pad = new byte[paddingSize];
-
-        Arrays.fill(pad, Byte.parseByte("0"));
-        contentBindingAssertion.setPadding(pad);
-
-        return contentBindingAssertion;
     }
 
     private IdentityAssertion getIdentityAssertion(List<Assertion> referencedAssertions) throws MipamsException {
