@@ -128,6 +128,7 @@ public class ProtectionIngredientTest {
         builder.setTitle("MIPAMS test image with ingredient");
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
 
         List<X509Certificate> certificates = CryptoUtils.getCertificate();
         builder.setClaimSignatureCertificates(certificates);
@@ -192,6 +193,7 @@ public class ProtectionIngredientTest {
         builder.setTitle("MIPAMS test image");
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
 
         List<X509Certificate> certificates = CryptoUtils.getCertificate();
         builder.setClaimSignatureCertificates(certificates);

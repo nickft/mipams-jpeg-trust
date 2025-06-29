@@ -106,6 +106,7 @@ public class Jpeg1ClaimGeneratorTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
         builder.setClaimSignatureCertificates(certificates);
 
         String targetFileUrl = assetFileUrl.replace(".jpeg", "-standard-manifest.jpeg");
@@ -174,6 +175,7 @@ public class Jpeg1ClaimGeneratorTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
         builder.setClaimSignatureCertificates(certificates);
 
         String targetFileUrl = assetFileUrl.replace(".jpeg", "-trust-declaration.jpeg");
@@ -253,6 +255,7 @@ public class Jpeg1ClaimGeneratorTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
         builder.setClaimSignatureCertificates(certificates);
 
         builder.addAssertion(actions);
@@ -322,6 +325,7 @@ public class Jpeg1ClaimGeneratorTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
         builder.setClaimSignatureCertificates(getCertificate());
 
         JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());

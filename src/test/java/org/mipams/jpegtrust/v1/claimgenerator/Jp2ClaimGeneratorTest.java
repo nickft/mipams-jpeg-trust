@@ -45,7 +45,7 @@ import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class})
+@ContextConfiguration(classes = { JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class })
 @ActiveProfiles("test")
 public class Jp2ClaimGeneratorTest {
 
@@ -62,8 +62,7 @@ public class Jp2ClaimGeneratorTest {
     void testGenerationOfTrustRecord() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jxl").getAbsolutePath();
 
         ActionsAssertionV1 actions = new ActionsAssertionV1();
@@ -140,8 +139,7 @@ public class Jp2ClaimGeneratorTest {
     void testGenerationOfTrustDeclaration() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jxl").getAbsolutePath();
 
         ActionsAssertionV1 actions = new ActionsAssertionV1();
@@ -167,6 +165,7 @@ public class Jp2ClaimGeneratorTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jxl");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
         builder.setClaimSignatureCertificates(certificates);
 
         String targetFileUrl = assetFileUrl.replace(".jxl", "-trust-declaration.jxl");
@@ -212,8 +211,7 @@ public class Jp2ClaimGeneratorTest {
     void testGenerationOfTrustRecordWithIngredientAssertion() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jxl").getAbsolutePath();
 
         JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl);
@@ -250,8 +248,7 @@ public class Jp2ClaimGeneratorTest {
         builder.addAssertion(contentBindingAssertion);
         builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
 
-        JumbfBox tempTrustRecord =
-                JpegTrustUtils.buildTrustRecord(builder.build(), ingredientManifest);
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build(), ingredientManifest);
         long totalBytesRequired = tempTrustRecord.getBoxSizeFromBmffHeaders();
 
         byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);

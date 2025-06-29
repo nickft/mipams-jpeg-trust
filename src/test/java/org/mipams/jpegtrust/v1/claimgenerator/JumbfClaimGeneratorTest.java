@@ -40,7 +40,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.ResourceUtils;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class})
+@ContextConfiguration(classes = { JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class })
 @ActiveProfiles("test")
 public class JumbfClaimGeneratorTest {
 
@@ -54,8 +54,7 @@ public class JumbfClaimGeneratorTest {
     void testGenerationOfTrustRecord() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
 
         ActionsAssertionV1 actions = new ActionsAssertionV1();
         ActionAssertionV1 assertion1 = new ActionAssertionV1();
@@ -87,7 +86,6 @@ public class JumbfClaimGeneratorTest {
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
         builder.setClaimSignatureCertificates(certificates);
 
-
         Signature signature = Signature.getInstance("SHA256withECDSA");
         signature.initSign(privKey);
         signature.update(builder.encodeClaimToBeSigned());
@@ -102,8 +100,7 @@ public class JumbfClaimGeneratorTest {
 
         JumbfBox trustRecord = trustRecordBuilder.getResult();
 
-        final String outputJumbfFile =
-                CoreUtils.randomStringGenerator() + "standard-manifest.jumbf";
+        final String outputJumbfFile = CoreUtils.randomStringGenerator() + "standard-manifest.jumbf";
         coreGeneratorService.generateJumbfMetadataToFile(List.of(trustRecord), outputJumbfFile);
     }
 
@@ -111,8 +108,7 @@ public class JumbfClaimGeneratorTest {
     void testGenerationOfTrustDeclaration() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
 
         ActionsAssertionV1 actions = new ActionsAssertionV1();
         ActionAssertionV1 assertion1 = new ActionAssertionV1();
@@ -136,6 +132,8 @@ public class JumbfClaimGeneratorTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
+
         builder.setClaimSignatureCertificates(certificates);
 
         Signature signature = Signature.getInstance("SHA256withECDSA");
@@ -152,8 +150,7 @@ public class JumbfClaimGeneratorTest {
 
         JumbfBox trustRecord = trustRecordBuilder.getResult();
 
-        final String outputJumbfFile =
-                CoreUtils.randomStringGenerator() + "trust-decleration.jumbf";
+        final String outputJumbfFile = CoreUtils.randomStringGenerator() + "trust-decleration.jumbf";
         coreGeneratorService.generateJumbfMetadataToFile(List.of(trustRecord), outputJumbfFile);
     }
 
@@ -161,8 +158,7 @@ public class JumbfClaimGeneratorTest {
     void testGenerationOfTrustRecordWithIngredientAssertion() throws Exception {
         List<X509Certificate> certificates = getCertificate();
 
-        PrivateKey privKey =
-                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
 
         JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl);
@@ -191,6 +187,7 @@ public class JumbfClaimGeneratorTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
         builder.setClaimSignatureCertificates(certificates);
 
         builder.addAssertion(actions);
@@ -210,8 +207,8 @@ public class JumbfClaimGeneratorTest {
 
         JumbfBox trustRecord = trustRecordBuilder.getResult();
 
-        final String outputJumbfFile =
-                CoreUtils.randomStringGenerator() + "standard-manifest-with-ingredient.jumbf";
+        final String outputJumbfFile = CoreUtils.randomStringGenerator()
+                + "standard-manifest-with-ingredient.jumbf";
         coreGeneratorService.generateJumbfMetadataToFile(List.of(trustRecord), outputJumbfFile);
     }
 
@@ -244,6 +241,7 @@ public class JumbfClaimGeneratorTest {
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
         builder.setClaimSignatureCertificates(getCertificate());
+        builder.setAlgorithm("sha256");
 
         Signature signature = Signature.getInstance("SHA256withECDSA");
         signature.initSign(

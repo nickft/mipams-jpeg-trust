@@ -53,259 +53,262 @@ import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 @ActiveProfiles("test")
 public class Jpeg1ClaimGeneratorTest {
 
-        @Autowired
-        JpegCodestreamGenerator jpegCodestreamGenerator;
+    @Autowired
+    JpegCodestreamGenerator jpegCodestreamGenerator;
 
-        @Autowired
-        JpegCodestreamParser parser;
+    @Autowired
+    JpegCodestreamParser parser;
 
-        @Autowired
-        CoreGeneratorService coreGeneratorService;
+    @Autowired
+    CoreGeneratorService coreGeneratorService;
 
-        @Autowired
-        CoreParserService coreParserService;
+    @Autowired
+    CoreParserService coreParserService;
 
-        @Test
-        void testGenerationOfTrustRecord() throws Exception {
-                List<X509Certificate> certificates = getCertificate();
+    @Test
+    void testGenerationOfTrustRecord() throws Exception {
+        List<X509Certificate> certificates = getCertificate();
 
-                PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
-                String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
 
-                String assetFileUrl = initialAssetFileUrl.replace("sample", "test-sample-v2");
-                jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
-                                new TrustRecordContentType().getContentTypeUuid());
-                ActionsAssertion actions = new ActionsAssertion();
+        String assetFileUrl = initialAssetFileUrl.replace("sample", "test-sample-v2");
+        jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
+                new TrustRecordContentType().getContentTypeUuid());
+        ActionsAssertion actions = new ActionsAssertion();
 
-                ActionAssertion assertion1 = new ActionAssertion();
-                assertion1.setAction(ActionChoice.C2PA_FILTERED.getValue());
-                assertion1.setSoftwareAgent("Adobe Photoshop");
-                assertion1.setWhen("27/10/24 10:12:32");
-                ParametersMap map = new ParametersMap();
-                map.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
-                assertion1.setParameters(map);
+        ActionAssertion assertion1 = new ActionAssertion();
+        assertion1.setAction(ActionChoice.C2PA_FILTERED.getValue());
+        assertion1.setSoftwareAgent("Adobe Photoshop");
+        assertion1.setWhen("27/10/24 10:12:32");
+        ParametersMap map = new ParametersMap();
+        map.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
+        assertion1.setParameters(map);
 
-                ActionAssertion assertion2 = new ActionAssertion();
-                assertion2.setAction(ActionChoice.C2PA_CONVERTED.getValue());
-                assertion2.setSoftwareAgent("Adobe Photoshop");
-                assertion2.setWhen("27/10/24 10:42:32");
-                assertion2.setParameters(map);
+        ActionAssertion assertion2 = new ActionAssertion();
+        assertion2.setAction(ActionChoice.C2PA_CONVERTED.getValue());
+        assertion2.setSoftwareAgent("Adobe Photoshop");
+        assertion2.setWhen("27/10/24 10:42:32");
+        assertion2.setParameters(map);
 
-                actions.setActions(List.of(assertion1, assertion2));
+        actions.setActions(List.of(assertion1, assertion2));
 
-                final BindingAssertion contentBindingAssertion = new BindingAssertion();
-                contentBindingAssertion.setAlgorithm("sha256");
-                contentBindingAssertion.addExclusionRange(0, 0);
-                byte[] pad = new byte[6];
-                Arrays.fill(pad, Byte.parseByte("0"));
-                contentBindingAssertion.setPadding(pad);
+        final BindingAssertion contentBindingAssertion = new BindingAssertion();
+        contentBindingAssertion.setAlgorithm("sha256");
+        contentBindingAssertion.addExclusionRange(0, 0);
+        byte[] pad = new byte[6];
+        Arrays.fill(pad, Byte.parseByte("0"));
+        contentBindingAssertion.setPadding(pad);
 
-                final ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());
-                builder.addCreatedAssertion(actions);
-                builder.addCreatedAssertion(contentBindingAssertion);
+        final ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());
+        builder.addCreatedAssertion(actions);
+        builder.addCreatedAssertion(contentBindingAssertion);
 
-                builder.setTitle("MIPAMS test image");
-                builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
-                builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
-                builder.setClaimSignatureCertificates(certificates);
+        builder.setTitle("MIPAMS test image");
+        builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
+        builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
+        builder.setClaimSignatureCertificates(certificates);
 
-                String targetFileUrl = assetFileUrl.replace(".jpeg", "-standard-manifest.jpeg");
+        String targetFileUrl = assetFileUrl.replace(".jpeg", "-standard-manifest.jpeg");
 
-                JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-                long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
 
-                // include exclusion range and adjust padding of content binding
-                byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
-                contentBindingAssertion.setDigest(digest);
-                contentBindingAssertion.addExclusionRange((int) totalBytesRequired, 2);
+        // include exclusion range and adjust padding of content binding
+        byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
+        contentBindingAssertion.setDigest(digest);
+        contentBindingAssertion.addExclusionRange((int) totalBytesRequired, 2);
 
-                int paddingSize = calculateMinimumBytesRequired(2, (int) totalBytesRequired);
-                pad = new byte[paddingSize];
+        int paddingSize = calculateMinimumBytesRequired(2, (int) totalBytesRequired);
+        pad = new byte[paddingSize];
 
-                Arrays.fill(pad, Byte.parseByte("0"));
-                contentBindingAssertion.setPadding(pad);
+        Arrays.fill(pad, Byte.parseByte("0"));
+        contentBindingAssertion.setPadding(pad);
 
-                builder.removeCreatedAssertion("c2pa.hash.data");
-                builder.addCreatedAssertion(contentBindingAssertion);
+        builder.removeCreatedAssertion("c2pa.hash.data");
+        builder.addCreatedAssertion(contentBindingAssertion);
 
-                Signature signature = Signature.getInstance("SHA256withECDSA");
-                signature.initSign(privKey);
-                signature.update(builder.encodeClaimToBeSigned());
-                builder.setClaimSignature(signature.sign());
+        Signature signature = Signature.getInstance("SHA256withECDSA");
+        signature.initSign(privKey);
+        signature.update(builder.encodeClaimToBeSigned());
+        builder.setClaimSignature(signature.sign());
 
-                JumbfBoxBuilder trustRecordBuilder = new JumbfBoxBuilder(new TrustRecordContentType());
-                trustRecordBuilder.setJumbfBoxAsRequestable();
-                trustRecordBuilder.setLabel(new TrustRecordContentType().getLabel());
+        JumbfBoxBuilder trustRecordBuilder = new JumbfBoxBuilder(new TrustRecordContentType());
+        trustRecordBuilder.setJumbfBoxAsRequestable();
+        trustRecordBuilder.setLabel(new TrustRecordContentType().getLabel());
 
-                JumbfBox manifest = builder.build();
-                trustRecordBuilder.appendContentBox(manifest);
+        JumbfBox manifest = builder.build();
+        trustRecordBuilder.appendContentBox(manifest);
 
-                JumbfBox trustRecord = trustRecordBuilder.getResult();
+        JumbfBox trustRecord = trustRecordBuilder.getResult();
 
-                jpegCodestreamGenerator.generateJumbfMetadataToFile(List.of(trustRecord), assetFileUrl,
-                                targetFileUrl);
+        jpegCodestreamGenerator.generateJumbfMetadataToFile(List.of(trustRecord), assetFileUrl,
+                targetFileUrl);
 
-                CoreUtils.deleteFile(assetFileUrl);
+        CoreUtils.deleteFile(assetFileUrl);
+    }
+
+    @Test
+    void testGenerationOfTrustRecordWithIngredientAssertion() throws Exception {
+        List<X509Certificate> certificates = getCertificate();
+
+        PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
+        String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
+        String assetFileUrl = initialAssetFileUrl.replace("sample", "test-sample");
+        jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
+                new TrustRecordContentType().getContentTypeUuid());
+
+        JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl);
+
+        ActionsAssertion actions = new ActionsAssertion();
+        ActionAssertion assertion2 = new ActionAssertion();
+        assertion2.setAction(ActionChoice.C2PA_OPENED.getValue());
+        assertion2.setSoftwareAgent("Adobe Photoshop");
+        assertion2.setWhen("22/2/22 15:42:32");
+        actions.setActions(List.of(assertion2));
+
+        final BindingAssertion contentBindingAssertion = new BindingAssertion();
+        contentBindingAssertion.setAlgorithm("sha256");
+        contentBindingAssertion.addExclusionRange(0, 0);
+        byte[] pad = new byte[6];
+        Arrays.fill(pad, Byte.parseByte("0"));
+        contentBindingAssertion.setPadding(pad);
+
+        final IngredientAssertion ingredientAssertion = new IngredientAssertion();
+        ingredientAssertion.setRelationship(IngredientAssertionV1.RELATIONSHIP_PARENT_OF);
+        ingredientAssertion.setInstanceId("ab610ae5124002be3dbf0c589a2f1f");
+        ingredientAssertion.setTitle("Ingredient manifest");
+        ingredientAssertion.setMediaType("image/jpeg");
+
+        final ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());
+        builder.setTitle("MIPAMS test image with ingredient");
+        builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
+        builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
+        builder.setClaimSignatureCertificates(certificates);
+
+        builder.addCreatedAssertion(actions);
+        builder.addCreatedAssertion(contentBindingAssertion);
+        builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
+
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build(), ingredientManifest);
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+
+        byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
+        contentBindingAssertion.setDigest(digest);
+        contentBindingAssertion.addExclusionRange((int) totalBytesRequired, 2);
+
+        int paddingSize = calculateMinimumBytesRequired(2, (int) totalBytesRequired);
+        pad = new byte[paddingSize];
+
+        Arrays.fill(pad, Byte.parseByte("0"));
+        contentBindingAssertion.setPadding(pad);
+
+        builder.removeCreatedAssertion("c2pa.hash.data");
+        builder.addCreatedAssertion(contentBindingAssertion);
+
+        Signature signature = Signature.getInstance("SHA256withECDSA");
+        signature.initSign(privKey);
+        signature.update(builder.encodeClaimToBeSigned());
+        builder.setClaimSignature(signature.sign());
+
+        JumbfBoxBuilder trustRecordBuilder = new JumbfBoxBuilder(new TrustRecordContentType());
+        trustRecordBuilder.setJumbfBoxAsRequestable();
+        trustRecordBuilder.setLabel(new TrustRecordContentType().getLabel());
+        trustRecordBuilder.appendContentBox(ingredientManifest);
+        trustRecordBuilder.appendContentBox(builder.build());
+
+        JumbfBox trustRecord = trustRecordBuilder.getResult();
+        String targetFileUrl = assetFileUrl.replace(".jpeg", "-with-ingredient.jpeg");
+        jpegCodestreamGenerator.generateJumbfMetadataToFile(List.of(trustRecord), assetFileUrl,
+                targetFileUrl);
+    }
+
+    private JumbfBox getIngredientManifest(String assetFileUrl) throws Exception {
+        ActionsAssertionV1 actions = new ActionsAssertionV1();
+
+        ActionAssertionV1 assertion1 = new ActionAssertionV1();
+        assertion1.setAction(ActionChoice.C2PA_FILTERED.getValue());
+        assertion1.setSoftwareAgent("Adobe Photoshop");
+        assertion1.setWhen("22/1/22 10:12:32");
+        assertion1.setParameters(Map.of("instanceID", "ed610ae51f604002be3dbf0c589a2f1f"));
+
+        actions.setActions(List.of(assertion1));
+
+        final BindingAssertion contentBindingAssertion = new BindingAssertion();
+        contentBindingAssertion.setAlgorithm("sha256");
+        contentBindingAssertion.addExclusionRange(0, 0);
+        byte[] pad = new byte[6];
+        Arrays.fill(pad, Byte.parseByte("0"));
+        contentBindingAssertion.setPadding(pad);
+
+        final ThumbnailAssertion thumbnailAssertion = new ThumbnailAssertion();
+        thumbnailAssertion.setThumbnailUrl(assetFileUrl);
+
+        final ManifestBuilderV1 builder = new ManifestBuilderV1(new StandardManifestContentType());
+        builder.addAssertion(actions);
+        builder.addAssertion(thumbnailAssertion);
+        builder.addAssertion(contentBindingAssertion);
+
+        builder.setTitle("MIPAMS test image");
+        builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
+        builder.setMediaType("image/jpeg");
+        builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setClaimSignatureCertificates(getCertificate());
+        builder.setAlgorithm("sha256");
+
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
+        long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
+
+        byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
+        contentBindingAssertion.setDigest(digest);
+        contentBindingAssertion.addExclusionRange((int) totalBytesRequired, 2);
+
+        int paddingSize = calculateMinimumBytesRequired(2, (int) totalBytesRequired);
+        pad = new byte[paddingSize];
+
+        Arrays.fill(pad, Byte.parseByte("0"));
+        contentBindingAssertion.setPadding(pad);
+
+        builder.removeAssertion("c2pa.hash.data");
+        builder.addAssertion(contentBindingAssertion);
+
+        Signature signature = Signature.getInstance("SHA256withECDSA");
+        signature.initSign(
+                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath()));
+        signature.update(builder.encodeClaimToBeSigned());
+        builder.setClaimSignature(signature.sign());
+
+        return builder.build();
+    }
+
+    private int calculateMinimumBytesRequired(int a, int b) throws Exception {
+        CBORMapper mapper = new CBORMapper();
+        int additionalBytesForA = mapper.writeValueAsBytes(a).length;
+        int additionalBytesForB = mapper.writeValueAsBytes(b).length;
+        return (CoreUtils.INT_BYTE_SIZE * 2) - additionalBytesForA - additionalBytesForB;
+    }
+
+    private List<X509Certificate> getCertificate() throws Exception {
+        try (FileInputStream fis = new FileInputStream(
+                ResourceUtils.getFile("classpath:certs.pem").getAbsolutePath())) {
+
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            return cf.generateCertificates(fis).stream().map(cert -> (X509Certificate) cert)
+                    .collect(Collectors.toList());
         }
+    }
 
-        @Test
-        void testGenerationOfTrustRecordWithIngredientAssertion() throws Exception {
-                List<X509Certificate> certificates = getCertificate();
-
-                PrivateKey privKey = getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
-                String initialAssetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
-                String assetFileUrl = initialAssetFileUrl.replace("sample", "test-sample");
-                jpegCodestreamGenerator.stripJumbfMetadataWithUuidEqualTo(initialAssetFileUrl, assetFileUrl,
-                                new TrustRecordContentType().getContentTypeUuid());
-
-                JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl);
-
-                ActionsAssertion actions = new ActionsAssertion();
-                ActionAssertion assertion2 = new ActionAssertion();
-                assertion2.setAction(ActionChoice.C2PA_OPENED.getValue());
-                assertion2.setSoftwareAgent("Adobe Photoshop");
-                assertion2.setWhen("22/2/22 15:42:32");
-                actions.setActions(List.of(assertion2));
-
-                final BindingAssertion contentBindingAssertion = new BindingAssertion();
-                contentBindingAssertion.setAlgorithm("sha256");
-                contentBindingAssertion.addExclusionRange(0, 0);
-                byte[] pad = new byte[6];
-                Arrays.fill(pad, Byte.parseByte("0"));
-                contentBindingAssertion.setPadding(pad);
-
-                final IngredientAssertion ingredientAssertion = new IngredientAssertion();
-                ingredientAssertion.setRelationship(IngredientAssertionV1.RELATIONSHIP_PARENT_OF);
-                ingredientAssertion.setInstanceId("ab610ae5124002be3dbf0c589a2f1f");
-                ingredientAssertion.setTitle("Ingredient manifest");
-                ingredientAssertion.setMediaType("image/jpeg");
-
-                final ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());
-                builder.setTitle("MIPAMS test image with ingredient");
-                builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
-                builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
-                builder.setClaimSignatureCertificates(certificates);
-
-                builder.addCreatedAssertion(actions);
-                builder.addCreatedAssertion(contentBindingAssertion);
-                builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
-
-                JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build(), ingredientManifest);
-                long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
-
-                byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
-                contentBindingAssertion.setDigest(digest);
-                contentBindingAssertion.addExclusionRange((int) totalBytesRequired, 2);
-
-                int paddingSize = calculateMinimumBytesRequired(2, (int) totalBytesRequired);
-                pad = new byte[paddingSize];
-
-                Arrays.fill(pad, Byte.parseByte("0"));
-                contentBindingAssertion.setPadding(pad);
-
-                builder.removeCreatedAssertion("c2pa.hash.data");
-                builder.addCreatedAssertion(contentBindingAssertion);
-
-                Signature signature = Signature.getInstance("SHA256withECDSA");
-                signature.initSign(privKey);
-                signature.update(builder.encodeClaimToBeSigned());
-                builder.setClaimSignature(signature.sign());
-
-                JumbfBoxBuilder trustRecordBuilder = new JumbfBoxBuilder(new TrustRecordContentType());
-                trustRecordBuilder.setJumbfBoxAsRequestable();
-                trustRecordBuilder.setLabel(new TrustRecordContentType().getLabel());
-                trustRecordBuilder.appendContentBox(ingredientManifest);
-                trustRecordBuilder.appendContentBox(builder.build());
-
-                JumbfBox trustRecord = trustRecordBuilder.getResult();
-                String targetFileUrl = assetFileUrl.replace(".jpeg", "-with-ingredient.jpeg");
-                jpegCodestreamGenerator.generateJumbfMetadataToFile(List.of(trustRecord), assetFileUrl,
-                                targetFileUrl);
+    public PrivateKey getPrivateKey(String fileUrl) throws Exception {
+        try {
+            byte[] decodedKey = Base64.getDecoder().decode(
+                    "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgfNJBsaRLSeHizv0mGL+gcn78QmtfLSm+n+qG9veC2W2hRANCAAQPaL6RkAkYkKU4+IryBSYxJM3h77sFiMrbvbI8fG7w2Bbl9otNG/cch3DAw5rGAPV7NWkyl3QGuV/wt0MrAPDo");
+            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decodedKey);
+            KeyFactory kf = KeyFactory.getInstance("EC");
+            return kf.generatePrivate(spec);
+        } catch (Exception e) {
+            throw new Exception(e);
         }
-
-        private JumbfBox getIngredientManifest(String assetFileUrl) throws Exception {
-                ActionsAssertionV1 actions = new ActionsAssertionV1();
-
-                ActionAssertionV1 assertion1 = new ActionAssertionV1();
-                assertion1.setAction(ActionChoice.C2PA_FILTERED.getValue());
-                assertion1.setSoftwareAgent("Adobe Photoshop");
-                assertion1.setWhen("22/1/22 10:12:32");
-                assertion1.setParameters(Map.of("instanceID", "ed610ae51f604002be3dbf0c589a2f1f"));
-
-                actions.setActions(List.of(assertion1));
-
-                final BindingAssertion contentBindingAssertion = new BindingAssertion();
-                contentBindingAssertion.setAlgorithm("sha256");
-                contentBindingAssertion.addExclusionRange(0, 0);
-                byte[] pad = new byte[6];
-                Arrays.fill(pad, Byte.parseByte("0"));
-                contentBindingAssertion.setPadding(pad);
-
-                final ThumbnailAssertion thumbnailAssertion = new ThumbnailAssertion();
-                thumbnailAssertion.setThumbnailUrl(assetFileUrl);
-
-                final ManifestBuilderV1 builder = new ManifestBuilderV1(new StandardManifestContentType());
-                builder.addAssertion(actions);
-                builder.addAssertion(thumbnailAssertion);
-                builder.addAssertion(contentBindingAssertion);
-
-                builder.setTitle("MIPAMS test image");
-                builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
-                builder.setMediaType("image/jpeg");
-                builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
-                builder.setClaimSignatureCertificates(getCertificate());
-
-                JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-                long totalBytesRequired = JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
-
-                byte[] digest = JpegTrustUtils.computeSha256DigestOfFileContents(assetFileUrl, null);
-                contentBindingAssertion.setDigest(digest);
-                contentBindingAssertion.addExclusionRange((int) totalBytesRequired, 2);
-
-                int paddingSize = calculateMinimumBytesRequired(2, (int) totalBytesRequired);
-                pad = new byte[paddingSize];
-
-                Arrays.fill(pad, Byte.parseByte("0"));
-                contentBindingAssertion.setPadding(pad);
-
-                builder.removeAssertion("c2pa.hash.data");
-                builder.addAssertion(contentBindingAssertion);
-
-                Signature signature = Signature.getInstance("SHA256withECDSA");
-                signature.initSign(
-                                getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath()));
-                signature.update(builder.encodeClaimToBeSigned());
-                builder.setClaimSignature(signature.sign());
-
-                return builder.build();
-        }
-
-        private int calculateMinimumBytesRequired(int a, int b) throws Exception {
-                CBORMapper mapper = new CBORMapper();
-                int additionalBytesForA = mapper.writeValueAsBytes(a).length;
-                int additionalBytesForB = mapper.writeValueAsBytes(b).length;
-                return (CoreUtils.INT_BYTE_SIZE * 2) - additionalBytesForA - additionalBytesForB;
-        }
-
-        private List<X509Certificate> getCertificate() throws Exception {
-                try (FileInputStream fis = new FileInputStream(
-                                ResourceUtils.getFile("classpath:certs.pem").getAbsolutePath())) {
-
-                        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                        return cf.generateCertificates(fis).stream().map(cert -> (X509Certificate) cert)
-                                        .collect(Collectors.toList());
-                }
-        }
-
-        public PrivateKey getPrivateKey(String fileUrl) throws Exception {
-                try {
-                        byte[] decodedKey = Base64.getDecoder().decode(
-                                        "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgfNJBsaRLSeHizv0mGL+gcn78QmtfLSm+n+qG9veC2W2hRANCAAQPaL6RkAkYkKU4+IryBSYxJM3h77sFiMrbvbI8fG7w2Bbl9otNG/cch3DAw5rGAPV7NWkyl3QGuV/wt0MrAPDo");
-                        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decodedKey);
-                        KeyFactory kf = KeyFactory.getInstance("EC");
-                        return kf.generatePrivate(spec);
-                } catch (Exception e) {
-                        throw new Exception(e);
-                }
-        }
+    }
 }

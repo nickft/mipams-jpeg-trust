@@ -131,6 +131,7 @@ public class SoftBindingAssertionTest {
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
         builder.setMediaType("image/jpeg");
         builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+        builder.setAlgorithm("sha256");
 
         List<X509Certificate> certificates = CryptoUtils.getCertificate();
         builder.setClaimSignatureCertificates(certificates);
