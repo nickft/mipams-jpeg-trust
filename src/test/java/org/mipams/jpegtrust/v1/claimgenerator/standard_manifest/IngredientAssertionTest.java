@@ -150,7 +150,7 @@ public class IngredientAssertionTest {
         JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl, mediaType);
         builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
 
-        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(ingredientManifest, builder.build());
         long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
                 ? tempTrustRecord.getBoxSizeFromBmffHeaders()
                 : JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);

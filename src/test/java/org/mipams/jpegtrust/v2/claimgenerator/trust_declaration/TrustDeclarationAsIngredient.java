@@ -60,7 +60,8 @@ public class TrustDeclarationAsIngredient {
     @Test
     void testTrustDeclarationAsIngredientJpeg1() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
-        String targetFileUrl = assetFileUrl.replace("sample.jpeg", "s12-trust-declaration-as-ingredient-2ed.jpeg");
+        String targetFileUrl = assetFileUrl.replace("sample.jpeg",
+                "s12-trust-declaration-as-ingredient-2ed.jpeg");
 
         JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jpeg");
 
@@ -77,7 +78,8 @@ public class TrustDeclarationAsIngredient {
     @Test
     void testTrustDeclarationAsIngredientJxl() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jxl").getAbsolutePath();
-        String targetFileUrl = assetFileUrl.replace("sample.jxl", "s12-trust-declaration-as-ingredient-2ed.jxl");
+        String targetFileUrl = assetFileUrl.replace("sample.jxl",
+                "s12-trust-declaration-as-ingredient-2ed.jxl");
 
         JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jxl");
 
@@ -94,7 +96,8 @@ public class TrustDeclarationAsIngredient {
     @Test
     void testTrustDeclarationAsIngredientJp2() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jp2").getAbsolutePath();
-        String targetFileUrl = assetFileUrl.replace("sample.jp2", "s12-trust-declaration-as-ingredient-2ed.jp2");
+        String targetFileUrl = assetFileUrl.replace("sample.jp2",
+                "s12-trust-declaration-as-ingredient-2ed.jp2");
 
         JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jp2");
 
@@ -150,7 +153,7 @@ public class TrustDeclarationAsIngredient {
         JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl, mediaType);
         builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
 
-        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(ingredientManifest, builder.build());
         long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
                 ? tempTrustRecord.getBoxSizeFromBmffHeaders()
                 : JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);

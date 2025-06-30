@@ -43,7 +43,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.ResourceUtils;
 
-
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { JumbfConfig.class, PrivsecConfig.class, JpegTrustConfig.class })
 @ActiveProfiles("test")
@@ -174,7 +173,7 @@ public class RedactedAssertionTest {
 
         builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
 
-        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(ingredientManifest, builder.build());
         long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
                 ? tempTrustRecord.getBoxSizeFromBmffHeaders()
                 : JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);

@@ -142,7 +142,7 @@ public class ProtectionIngredientTest {
         ingredientAssertion.setRelationship(IngredientAssertionV1.RELATIONSHIP_PARENT_OF);
         ingredientAssertion.setInstanceId("ab610ae5124002be3dbf0c589a2f1f");
         ingredientAssertion.setTitle("Ingredient manifest");
-        ingredientAssertion.setMediaType("image/jpeg");
+        ingredientAssertion.setMediaType(mediaType);
 
         final ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());
         builder.setTitle("MIPAMS test image with ingredient");
@@ -159,7 +159,7 @@ public class ProtectionIngredientTest {
         JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl, mediaType);
         builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
 
-        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
+        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(ingredientManifest, builder.build());
         long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
                 ? tempTrustRecord.getBoxSizeFromBmffHeaders()
                 : JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
