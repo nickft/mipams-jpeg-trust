@@ -52,13 +52,6 @@ public class ManifestBuilderV1 {
         this.assertionMap = new LinkedHashSet<>();
     }
 
-    public ManifestBuilderV1 addAssertion(JumbfBox assertionJumbfBox, HashedUriReference hashedUriReference)
-            throws Exception {
-        hashedUriReference.setUrl(
-                String.format("self#jumbf=c2pa.assertions/%s", assertionJumbfBox.getDescriptionBox().getLabel()));
-        return this;
-    }
-
     public ManifestBuilderV1 addIngredientAssertion(IngredientAssertionV1 ingredientAssertion,
             JumbfBox ingredientManifest) throws MipamsException {
         if (ingredientManifest.getDescriptionBox().getLabel() == null) {
@@ -236,7 +229,6 @@ public class ManifestBuilderV1 {
         this.assertionMap = new LinkedHashSet<>(
                 this.assertionMap.stream().filter(entrySet -> !entrySet.getDescriptionBox().getLabel().equals(label))
                         .collect(Collectors.toSet()));
-
     }
 
     private byte[] calculateDigestForJumbfBox(JumbfBox jumbfBox) throws MipamsException {

@@ -102,7 +102,7 @@ public class ManifestBuilder {
             throw new MipamsException(String.format("Assertion with no label %s", assertionJumbfBox.toString()));
         }
 
-        createdAssertions.add(assertionJumbfBox);
+        this.createdAssertions.add(assertionJumbfBox);
 
         return this;
     }
@@ -198,6 +198,9 @@ public class ManifestBuilder {
             throw new MipamsException("Empty manifest: No assertions specified");
         }
 
+        ensureLabelUniquenessInAssertionStore();
+        buildClaimAssertions();
+
         List<JumbfBox> assertions = new ArrayList<>();
         assertions.addAll(createdAssertions);
         assertions.addAll(gatheredAssertions);
@@ -259,7 +262,6 @@ public class ManifestBuilder {
         this.createdAssertions = new LinkedHashSet<>(this.createdAssertions.stream()
                 .filter(entrySet -> !entrySet.getDescriptionBox().getLabel().equals(label))
                 .collect(Collectors.toSet()));
-
     }
 
     public void removeGatheredAssertion(String label) {
