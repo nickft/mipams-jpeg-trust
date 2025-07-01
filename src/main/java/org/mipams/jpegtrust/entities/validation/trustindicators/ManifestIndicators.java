@@ -7,11 +7,21 @@ import org.mipams.jpegtrust.entities.assertions.Assertion;
 
 public class ManifestIndicators implements ManifestIndicatorsInterface {
 
+    String label;
+
     Map<String, Assertion> assertions = new HashMap<>();
 
     ClaimIndicatorsInterface claim;
 
     ClaimSignatureIndicators claimSignature;
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
 
     public Map<String, Assertion> getAssertions() {
         return assertions;

@@ -107,6 +107,7 @@ public class ManifestConsumer {
                 ClaimSignatureIndicators claimSignatureIndicators = claimSignatureConsumer
                         .buildClaimSignatureIndicatorSet(claimSignatureJumbfBox);
 
+                manifestIndicators.setLabel(manifestUuid);
                 manifestIndicators.setClaim(claimIndicators);
                 manifestIndicators.setClaimSignature(claimSignatureIndicators);
                 claimHashAlgorithm = claimConsumer

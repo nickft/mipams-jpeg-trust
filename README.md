@@ -7,14 +7,14 @@ Once all dependencies are available in the local maven repository, it is possibl
 
 Building from scratch the org.mipams.jpeg-trust library as a package available in the local maven repository. This assumes that the org.mipams.privsec is already installed in the local maven repository. To install MIPAMS JPEG Trust library run the following command within the home directory of the repository:
 
-```
+```bash
 mvn clean install
 ```
 
 ## Importing as a dependency
 Once the org.mipams.jpeg-trust library has been successfully installed in the local environment, an end-user application can install it as part of its own dependencies by adding the dependency snippet in the pom.xml file of the application as shown in Figure A.2. Including the MIPAMS JPEG Trust implementation by including the following dependency in the pom.xml file:
 
-```
+```xml
 <dependency>
     <groupId>org.mipams</groupId>
     <artifactId>jpeg-trust</artifactId>
@@ -26,7 +26,7 @@ Once the org.mipams.jpeg-trust library has been successfully installed in the lo
 ### Creating a JPEG Trust Record
 One of the key functionalities of this SDK is the creation of JPEG Trust data. An example is shown below where one may use the ManifestBuilder object to instruct the creation of a particular type of Trust Manifest. In this example, a Standard Manifest Content type is selected. 
 
-```
+```java
 import org.mipams.jumbf.entities.JumbfBox;
 
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
@@ -75,6 +75,8 @@ JumbfBox trustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
 ### Verifying that a JPEG Trust Record is valid and well-formed
 
 One of the core parts of the overall JPEG Trust framework is the extraction of Trust Indicators coming from the media asset. This reference implementation exposes a service, namely  the ManifestConsumerServie. It is developed as a Java Bean class, allowing applications to load it and use it to validate the provided JUMBF box that corresponds to a JPEG Trust Record Content type. Figure A.4 demonstrates how this service can be invoked in order to extract the Trust Indicators Set in the form of a Java object that could be later serialized as a JSON structure to be evaluated against a Trust Profile. This example shows how a third application would use the service offered by this referencec implementation to extract the Trust Indicator Set. Assuming that it has already located and extracted the JPEG Trust Record JUMBF box (instantiated as a JumbfBox Java object in the variable trustRecord) within the media asset, it is able to invoke the “validate()” method to extract all the Trust Indicators from the JPEG Trust metadata of the media asset. The main functionalities of this service is to evaluate that the provided JPEG Trust Record constitutes a well-formed JUMBF Box. This is equivalent to the service validating all internal JUMBF Boxes within a JPEG Trust Record and ensuring that their contents have been encoded in conformance to ISO/IEC 21617-1. In addition, this service performs all the integrity and authenticity checks ensuring that the JPEG Trust Record can be considered valid.
+
+```java
 import org.mipams.jumbf.util.MipamsException;
 
 import org.mipams.jpegtrust.service.ManifestConsumerService;
@@ -88,10 +90,9 @@ public TrustIndicatorSet validateTrustRecordAndExtractTrustIndicatorSet(JumbfBox
 // located at targetFileUrl
 
     TrustIndicatorSet trustIndicatorSet = manifestStoreConsumerService.validate(trustRecord, targetFileUrl);
-
     return trustIndicatorSet;
 }
-Figure A.4 — Example on how to invoke the validation service
+```
 
 ## Current assumptions on the implementation
 
