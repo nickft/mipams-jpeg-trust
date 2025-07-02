@@ -17,6 +17,7 @@ import org.mipams.jpegtrust.entities.validation.ValidationException;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicatorsInterface;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimSignatureIndicators;
+import org.mipams.jpegtrust.entities.validation.trustindicators.EmptyAssertionIndicator;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ManifestIndicators;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimContentType;
@@ -170,6 +171,8 @@ public class ManifestConsumer {
                 Assertion assertion = assertionDiscovery.convertJumbfBoxToAssertion(assertionJumbfBox.get());
 
                 if (assertion == null) {
+                    manifestIndicators.getAssertions()
+                            .put(assertionJumbfBox.get().getDescriptionBox().getLabel(), new EmptyAssertionIndicator());
                     continue;
                 }
 

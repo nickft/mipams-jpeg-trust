@@ -5,8 +5,12 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class TrustIndicatorSet {
     @JsonProperty("@context")
@@ -58,9 +62,21 @@ public class TrustIndicatorSet {
         ObjectMapper mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         try {
+            SimpleModule module = new SimpleModule();
+            module.addSerializer(EmptyAssertionIndicator.class, new AssertionSerializer());
+            mapper.registerModule(module);
             return mapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             return this.toString();
+        }
+    }
+
+    public static class AssertionSerializer extends JsonSerializer<EmptyAssertionIndicator> {
+        @Override
+        public void serialize(EmptyAssertionIndicator value, JsonGenerator gen, SerializerProvider serializers)
+                throws java.io.IOException {
+            gen.writeStartObject();
+            gen.writeEndObject();
         }
     }
 }

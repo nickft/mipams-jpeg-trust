@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.mipams.jpegtrust.entities.assertions.Assertion;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ManifestIndicators implements ManifestIndicatorsInterface {
 
     String label;
@@ -13,6 +15,7 @@ public class ManifestIndicators implements ManifestIndicatorsInterface {
 
     ClaimIndicatorsInterface claim;
 
+    @JsonProperty("claim_signature")
     ClaimSignatureIndicators claimSignature;
 
     public String getLabel() {

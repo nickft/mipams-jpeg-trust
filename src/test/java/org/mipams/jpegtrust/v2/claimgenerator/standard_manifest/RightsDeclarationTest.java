@@ -58,7 +58,7 @@ public class RightsDeclarationTest {
     ManifestStoreConsumer manifestStoreConsumer;
 
     @Test
-    void testRedactingAnAssertionJpeg1() throws Exception {
+    void testRightsDeclarationJpeg1() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
         String targetFileUrl = assetFileUrl.replace("sample.jpeg", "s05-redacting-an-assertion-2ed.jpeg");
 
@@ -75,7 +75,7 @@ public class RightsDeclarationTest {
     }
 
     @Test
-    void testRedactingAnAssertionJxl() throws Exception {
+    void testRightsDeclarationJxl() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jxl").getAbsolutePath();
         String targetFileUrl = assetFileUrl.replace("sample.jxl", "s05-redacting-an-assertion-2ed.jxl");
 
@@ -92,7 +92,7 @@ public class RightsDeclarationTest {
     }
 
     @Test
-    void testRedactingAnAssertionJp2() throws Exception {
+    void testRightsDeclarationJp2() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jp2").getAbsolutePath();
         String targetFileUrl = assetFileUrl.replace("sample.jp2", "s05-redacting-an-assertion-2ed.jp2");
 

@@ -63,7 +63,7 @@ public class RedactedAssertionTest {
     @Test
     void testRedactingAssertionJpeg1() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jpeg").getAbsolutePath();
-        String targetFileUrl = assetFileUrl.replace("sample.jpeg", "s09-redacting-assertion-2ed.jpeg");
+        String targetFileUrl = assetFileUrl.replace("sample.jpeg", "s08-redacting-assertion-2ed.jpeg");
 
         JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jpeg");
 
