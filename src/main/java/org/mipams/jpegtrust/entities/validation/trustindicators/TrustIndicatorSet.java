@@ -3,6 +3,8 @@ package org.mipams.jpegtrust.entities.validation.trustindicators;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mipams.jpegtrust.entities.validation.trustindicators.ManifestIndicators.ManifestIndicatorsSerializer;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -64,6 +66,7 @@ public class TrustIndicatorSet {
         try {
             SimpleModule module = new SimpleModule();
             module.addSerializer(EmptyAssertionIndicator.class, new AssertionSerializer());
+            module.addSerializer(ManifestIndicators.class, new ManifestIndicatorsSerializer());
             mapper.registerModule(module);
             return mapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {

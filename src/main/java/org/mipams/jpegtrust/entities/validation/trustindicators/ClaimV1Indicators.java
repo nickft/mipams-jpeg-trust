@@ -6,6 +6,7 @@ import java.util.Map;
 import org.mipams.jpegtrust.entities.ClaimV1;
 import org.mipams.jpegtrust.entities.validation.ValidationCode;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ClaimV1Indicators extends ClaimV1 implements ClaimIndicatorsInterface {
@@ -56,5 +57,11 @@ public class ClaimV1Indicators extends ClaimV1 implements ClaimIndicatorsInterfa
         setAlgorithm(claim.getAlgorithm());
         setMediaType(claim.getMediaType());
         setMetadata(claim.getMetadata());
+    }
+
+    @JsonIgnore
+    @Override
+    public String getClaimIndicatorKeyName() {
+        return "claim";
     }
 }

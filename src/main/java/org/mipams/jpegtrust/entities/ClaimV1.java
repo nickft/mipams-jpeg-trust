@@ -32,7 +32,7 @@ public class ClaimV1 implements ProvenanceEntity {
     private String instanceId;
 
     @JsonProperty("redacted_assertions")
-    private LinkedHashSet<String> redactedAssertions;
+    private LinkedHashSet<String> redactedAssertions = new LinkedHashSet<>();
 
     @JsonProperty("alg")
     private String algorithm;
