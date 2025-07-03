@@ -14,11 +14,11 @@ import org.mipams.jpegtrust.entities.ProvenanceEntity;
 import org.mipams.jpegtrust.entities.assertions.Assertion;
 import org.mipams.jpegtrust.entities.validation.ValidationCode;
 import org.mipams.jpegtrust.entities.validation.ValidationException;
-import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimIndicatorsInterface;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimSignatureIndicators;
 import org.mipams.jpegtrust.entities.validation.trustindicators.EmptyAssertionIndicator;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ManifestIndicators;
+import org.mipams.jpegtrust.entities.validation.trustindicators.ValidationStatusIndicators;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimSignatureContentType;
@@ -68,6 +68,7 @@ public class ManifestConsumer {
 
         final ManifestIndicators manifestIndicators = new ManifestIndicators();
 
+        ValidationStatusIndicators validationStatusIndicators = new ValidationStatusIndicators();
         ClaimIndicatorsInterface claimIndicators;
         JumbfBox currentManifest;
 
@@ -111,18 +112,19 @@ public class ManifestConsumer {
                 manifestIndicators.setLabel(manifestUuid);
                 manifestIndicators.setClaim(claimIndicators);
                 manifestIndicators.setClaimSignature(claimSignatureIndicators);
+                manifestIndicators.setValidationStatusIndicators(validationStatusIndicators);
                 claimHashAlgorithm = claimConsumer
                         .extractHashAlgorithmFromClaim(claimStructureToBeSigned);
 
                 try {
                     claimSignatureConsumer.validateSignature(claimSignatureJumbfBox, claimStructureToBeSigned);
-                    claimIndicators.setSignatureStatus(ValidationCode.CLAIM_SIGNATURE_VALIDATED);
+                    validationStatusIndicators.setSignatureStatus(ValidationCode.CLAIM_SIGNATURE_VALIDATED);
                     String claimSignatureUri = JpegTrustUtils.getProvenanceJumbfURL(manifestUuid,
                             claimSignatureContentType.getLabel());
                     claimIndicators.setSignature(claimSignatureUri);
                     manifestIndicators.setClaim(claimIndicators);
                 } catch (MipamsException e) {
-                    claimIndicators.setSignatureStatus(ValidationCode.CLAIM_SIGNATURE_MISMATCH);
+                    validationStatusIndicators.setSignatureStatus(ValidationCode.CLAIM_SIGNATURE_MISMATCH);
                     manifestIndicators.setClaim(claimIndicators);
                     return manifestIndicators;
                 }
@@ -146,7 +148,7 @@ public class ManifestConsumer {
             LinkedHashSet<HashedUriReference> referencedAssertions = claimConsumer
                     .getNonRedactedAssertionsFromClaimInManifestJumbfBox(currentManifest, redactedAssertions);
 
-            claimIndicators.getAssertionStatus()
+            validationStatusIndicators.getAssertionStatus()
                     .putAll(assertionConsumer.validateAssertionsIntegrityAndGetAssertionStatus(manifestUuid,
                             claimHashAlgorithm, referencedAssertions, manifestStoreJumbfBox));
 
@@ -191,18 +193,18 @@ public class ManifestConsumer {
             return manifestIndicators;
 
         } catch (ValidationException e) {
-            claimIndicators = new ClaimIndicators();
-            claimIndicators.setContentStatus(e.getStatusCode());
-            claimIndicators.getAssertionStatus().clear();
+            validationStatusIndicators = new ValidationStatusIndicators();
+            validationStatusIndicators.setContentStatus(e.getStatusCode());
+            validationStatusIndicators.getAssertionStatus().clear();
             manifestIndicators.getAssertions().clear();
-            manifestIndicators.setClaim(claimIndicators);
+            manifestIndicators.setValidationStatusIndicators(validationStatusIndicators);
             return manifestIndicators;
         } catch (MipamsException e) {
-            claimIndicators = new ClaimIndicators();
-            claimIndicators.setContentStatus(ValidationCode.GENERAL_ERROR);
-            claimIndicators.getAssertionStatus().clear();
+            validationStatusIndicators = new ValidationStatusIndicators();
+            validationStatusIndicators.setContentStatus(ValidationCode.GENERAL_ERROR);
+            validationStatusIndicators.getAssertionStatus().clear();
             manifestIndicators.getAssertions().clear();
-            manifestIndicators.setClaim(claimIndicators);
+            manifestIndicators.setValidationStatusIndicators(validationStatusIndicators);
             return manifestIndicators;
         }
     }

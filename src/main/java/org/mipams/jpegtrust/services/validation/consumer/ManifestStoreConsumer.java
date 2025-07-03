@@ -65,10 +65,10 @@ public class ManifestStoreConsumer {
                     manifestConsumer.validateContentBinding(manifestUuid, manifestStoreJumbfBox,
                             assetUrl);
 
-                    manifestIndicators.getClaim()
+                    manifestIndicators.getValidationStatusIndicators()
                             .setContentStatus(ValidationCode.ASSERTION_DATA_HASH_MATCH);
                 } catch (ValidationException e) {
-                    manifestIndicators.getClaim()
+                    manifestIndicators.getValidationStatusIndicators()
                             .setContentStatus(ValidationCode.ASSERTION_DATA_HASH_MISMATCH);
                 }
             }

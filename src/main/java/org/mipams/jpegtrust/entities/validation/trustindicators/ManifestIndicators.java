@@ -22,6 +22,9 @@ public class ManifestIndicators implements ManifestIndicatorsInterface {
     @JsonProperty("claim_signature")
     ClaimSignatureIndicators claimSignature;
 
+    @JsonProperty("status")
+    ValidationStatusIndicators validationStatusIndicators = new ValidationStatusIndicators();
+
     public String getLabel() {
         return label;
     }
@@ -54,6 +57,14 @@ public class ManifestIndicators implements ManifestIndicatorsInterface {
         this.claimSignature = claimSignature;
     }
 
+    public ValidationStatusIndicators getValidationStatusIndicators() {
+        return validationStatusIndicators;
+    }
+
+    public void setValidationStatusIndicators(ValidationStatusIndicators validationStatusIndicators) {
+        this.validationStatusIndicators = validationStatusIndicators;
+    }
+
     public static class ManifestIndicatorsSerializer extends JsonSerializer<ManifestIndicators> {
         @Override
         public void serialize(ManifestIndicators value, JsonGenerator gen, SerializerProvider serializers)
@@ -67,8 +78,13 @@ public class ManifestIndicators implements ManifestIndicatorsInterface {
             gen.writeFieldName("assertions");
             serializers.defaultSerializeValue(value.getAssertions(), gen);
 
-            gen.writeFieldName(value.getClaim().getClaimIndicatorKeyName());
-            serializers.defaultSerializeValue(value.getClaim(), gen);
+            if (value.getClaim() != null) {
+                gen.writeFieldName(value.getClaim().getClaimIndicatorKeyName());
+                serializers.defaultSerializeValue(value.getClaim(), gen);
+            }
+
+            gen.writeFieldName("status");
+            serializers.defaultSerializeValue(value.getValidationStatusIndicators(), gen);
 
             gen.writeFieldName("claim_signature");
             serializers.defaultSerializeValue(value.getClaimSignature(), gen);
