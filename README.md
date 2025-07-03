@@ -11,6 +11,8 @@ Building from scratch the org.mipams.jpeg-trust library as a package available i
 mvn clean install
 ```
 
+NOTE: This library depends on the MIPAMS JUMBF implementation for handling arbitrary JUMBF payload. See [here](https://github.com/nickft/mipams-jpeg-systems) for more information on how to build it from scratch.
+
 ## Importing as a dependency
 Once the org.mipams.jpeg-trust library has been successfully installed in the local environment, an end-user application can install it as part of its own dependencies by adding the dependency snippet in the pom.xml file of the application as shown in Figure A.2. Including the MIPAMS JPEG Trust implementation by including the following dependency in the pom.xml file:
 
