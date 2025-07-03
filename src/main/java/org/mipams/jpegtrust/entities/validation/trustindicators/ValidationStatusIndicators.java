@@ -8,16 +8,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ValidationStatusIndicators implements EntityIndicators {
 
-    @JsonProperty("signature_status")
+    @JsonProperty("signature")
     private String signatureStatus = "";
 
-    @JsonProperty("assertion_status")
+    @JsonProperty("assertion")
     private Map<String, String> assertionStatus = new HashMap<>();
 
-    @JsonProperty("content_status")
+    @JsonProperty("content")
     private String contentStatus = "";
 
-    @JsonProperty("trust_status")
+    @JsonProperty("trust")
     private String trustStatus = "";
 
     public String getSignatureStatus() {
