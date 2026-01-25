@@ -6,6 +6,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+
 import org.mipams.jpegtrust.entities.Claim;
 import org.mipams.jpegtrust.entities.ClaimV1;
 import org.mipams.jpegtrust.entities.ProvenanceEntity;
@@ -70,15 +71,25 @@ public class CoseUtils {
 
         byte[] payload = toCborEncodedByteArray(provenanceEntity);
 
-        COSEProtectedHeaderBuilder builder = new COSEProtectedHeaderBuilder().alg(COSEAlgorithms.ES256);
+        COSEProtectedHeaderBuilder builder = new COSEProtectedHeaderBuilder();
 
         if (claimSignatureCertificates != null) {
-            builder.x5chain(claimSignatureCertificates);
+            builder.x5chain(claimSignatureCertificates).alg(COSEAlgorithms.ES256);
         }
 
         COSEProtectedHeader protectedHeader = builder.build();
 
         SigStructure structure = new SigStructureBuilder().signature1().bodyAttributes(protectedHeader).payload(payload)
+                .build();
+
+        return structure.encode();
+    }
+
+    public static byte[] produceCOSESigStructureFromTrustManifest(byte[] claimPayload,
+            COSEProtectedHeader protectedHeader) throws CertificateEncodingException {
+
+        SigStructure structure = new SigStructureBuilder().signature1().bodyAttributes(protectedHeader)
+                .payload(claimPayload)
                 .build();
 
         return structure.encode();
@@ -97,8 +108,8 @@ public class CoseUtils {
     public static byte[] toCoseSign1EncodedBytestream(List<X509Certificate> claimSignatureCertificates,
             byte[] claimSignature) throws MipamsException {
         try {
-            COSEProtectedHeader protectedHeader = new COSEProtectedHeaderBuilder().alg(COSEAlgorithms.ES256)
-                    .x5chain(claimSignatureCertificates).build();
+            COSEProtectedHeader protectedHeader = new COSEProtectedHeaderBuilder()
+                    .x5chain(claimSignatureCertificates).alg(COSEAlgorithms.ES256).build();
 
             final int defaultPadSize = 5 * 1024;
             int paddingSize = (claimSignature != null && claimSignature.length > 0)
@@ -128,6 +139,34 @@ public class CoseUtils {
             COSESign1 sign1 = (COSESign1) tagged.getTagContent();
 
             return sign1.getSignature().getValue();
+        } catch (IOException e) {
+            throw new MipamsException(e);
+        }
+    }
+
+    public static COSEProtectedHeader extractProtectedHeaderFromCoseSign1(byte[] coseBytes) throws MipamsException {
+        try {
+            CBORItem item = new CBORDecoder(coseBytes).next();
+
+            CBORTaggedItem tagged = (CBORTaggedItem) item;
+
+            COSESign1 sign1 = (COSESign1) tagged.getTagContent();
+
+            return sign1.getProtectedHeader();
+        } catch (IOException e) {
+            throw new MipamsException(e);
+        }
+    }
+
+    public static COSEUnprotectedHeader extractUnprotectedHeaderFromCoseSign1(byte[] coseBytes) throws MipamsException {
+        try {
+            CBORItem item = new CBORDecoder(coseBytes).next();
+
+            CBORTaggedItem tagged = (CBORTaggedItem) item;
+
+            COSESign1 sign1 = (COSESign1) tagged.getTagContent();
+
+            return sign1.getUnprotectedHeader();
         } catch (IOException e) {
             throw new MipamsException(e);
         }
