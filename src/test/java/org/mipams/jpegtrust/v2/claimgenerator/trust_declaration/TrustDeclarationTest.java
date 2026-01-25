@@ -1,29 +1,16 @@
 package org.mipams.jpegtrust.v2.claimgenerator.trust_declaration;
 
 import java.io.ByteArrayInputStream;
-import java.security.PrivateKey;
-import java.security.Signature;
-import java.security.cert.X509Certificate;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mipams.jpegtrust.builders.ManifestBuilder;
 import org.mipams.jpegtrust.config.JpegTrustConfig;
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
-import org.mipams.jpegtrust.entities.assertions.BindingAssertion;
-import org.mipams.jpegtrust.entities.assertions.actions.ActionAssertion;
-import org.mipams.jpegtrust.entities.assertions.actions.ActionsAssertion;
-import org.mipams.jpegtrust.entities.assertions.enums.ActionChoice;
 import org.mipams.jpegtrust.entities.validation.trustindicators.TrustIndicatorSet;
-import org.mipams.jpegtrust.jpeg_systems.content_types.TrustDeclarationContentType;
+import org.mipams.jpegtrust.services.JumbfBoxDigestService;
 import org.mipams.jpegtrust.services.validation.consumer.ManifestStoreConsumer;
-import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery;
-import org.mipams.jpegtrust.utils.CryptoUtils;
-import org.mipams.jpegtrust.utils.Utils;
+import org.mipams.jpegtrust.v2.claimgenerator.ManifestScenarios;
 import org.mipams.jumbf.config.JumbfConfig;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.services.Jp2CodestreamGenerator;
@@ -53,6 +40,9 @@ public class TrustDeclarationTest {
 
     @Autowired
     ManifestStoreConsumer manifestStoreConsumer;
+
+    @Autowired
+    JumbfBoxDigestService jumbfBoxDigestService;
 
     @Test
     void testTrustDeclarationJpeg1() throws Exception {
@@ -106,53 +96,12 @@ public class TrustDeclarationTest {
     }
 
     private JumbfBox constructTrustRecordForScenario(String assetFileUrl, String mediaType) throws Exception {
-        ActionsAssertion actions = new ActionsAssertion();
-        ActionAssertion assertion1 = new ActionAssertion();
-        assertion1.setAction(ActionChoice.C2PA_CREATED.getValue());
-        assertion1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        assertion1.setDigitalSourceType(
-                "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicallyEnhanced");
-        actions.setActions(List.of(assertion1));
+        ManifestScenarios manifestScenarios = new ManifestScenarios();
+        manifestScenarios.setJumbfBoxDigestService(jumbfBoxDigestService);
 
-        final BindingAssertion tempBindingAssertion = new BindingAssertion();
-        tempBindingAssertion.setAlgorithm("sha256");
-        tempBindingAssertion.addExclusionRange(0, 0);
-        byte[] pad = new byte[6];
-        Arrays.fill(pad, Byte.parseByte("0"));
-        tempBindingAssertion.setPadding(pad);
+        JumbfBox trustDeclaration = manifestScenarios.getTrustDeclarationManifest(assetFileUrl, mediaType);
 
-        final ManifestBuilder builder = new ManifestBuilder(new TrustDeclarationContentType());
-        builder.addCreatedAssertion(actions);
-        builder.addCreatedAssertion(tempBindingAssertion);
-
-        builder.setTitle("MIPAMS test image");
-        builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
-        builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
-        builder.setAlgorithm("sha256");
-
-        List<X509Certificate> certificates = CryptoUtils.getCertificate();
-        builder.setClaimSignatureCertificates(certificates);
-
-        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-        long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
-                ? tempTrustRecord.getBoxSizeFromBmffHeaders()
-                : JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
-
-        BindingAssertion contentBindingAssertion = Utils.getBindingAssertionForAsset(assetFileUrl,
-                totalBytesRequired);
-
-        builder.removeCreatedAssertion(AssertionDiscovery.MipamsAssertion.CONTENT_BINDING.getBaseLabel());
-        builder.addCreatedAssertion(contentBindingAssertion);
-
-        PrivateKey privKey = CryptoUtils
-                .getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
-
-        Signature signature = Signature.getInstance("SHA256withECDSA");
-        signature.initSign(privKey);
-        signature.update(builder.encodeClaimToBeSigned());
-        builder.setClaimSignature(signature.sign());
-
-        JumbfBox trustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
+        JumbfBox trustRecord = JpegTrustUtils.buildTrustRecord(trustDeclaration);
         return trustRecord;
     }
 }

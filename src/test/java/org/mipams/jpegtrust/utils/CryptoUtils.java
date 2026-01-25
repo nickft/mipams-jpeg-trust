@@ -40,4 +40,38 @@ public class CryptoUtils {
         }
     }
 
+    public static byte[] decodeFromDER(byte[] derSignature, int keyLength) throws Exception {
+        if (derSignature[0] != 0x30)
+            throw new IllegalArgumentException("Invalid DER format");
+
+        int offset = 2;
+        if (derSignature[1] > 0x80) {
+            int lengthBytes = derSignature[1] & 0x7F;
+            offset = 2 + lengthBytes;
+        }
+
+        if (derSignature[offset] != 0x02)
+            throw new IllegalArgumentException("Invalid DER INTEGER for r");
+        int rLength = derSignature[offset + 1];
+        byte[] rBytes = new byte[keyLength];
+        System.arraycopy(derSignature, offset + 2 + Math.max(0, rLength - keyLength),
+                rBytes, Math.max(0, keyLength - rLength),
+                Math.min(rLength, keyLength));
+
+        int sOffset = offset + 2 + rLength;
+        if (derSignature[sOffset] != 0x02)
+            throw new IllegalArgumentException("Invalid DER INTEGER for s");
+        int sLength = derSignature[sOffset + 1];
+        byte[] sBytes = new byte[keyLength];
+        System.arraycopy(derSignature, sOffset + 2 + Math.max(0, sLength - keyLength),
+                sBytes, Math.max(0, keyLength - sLength),
+                Math.min(sLength, keyLength));
+
+        byte[] rawSignature = new byte[2 * keyLength];
+        System.arraycopy(rBytes, 0, rawSignature, 0, keyLength);
+        System.arraycopy(sBytes, 0, rawSignature, keyLength, keyLength);
+
+        return rawSignature;
+    }
+
 }

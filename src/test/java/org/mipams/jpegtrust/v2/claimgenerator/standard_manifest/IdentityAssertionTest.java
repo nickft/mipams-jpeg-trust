@@ -3,6 +3,7 @@ package org.mipams.jpegtrust.v2.claimgenerator.standard_manifest;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 
+import org.mipams.jpegtrust.entities.DigestResultForJumbfBox;
 import org.mipams.jpegtrust.entities.HashedUriReference;
 import org.mipams.jpegtrust.entities.assertions.cawg.IdentityAssertion;
 import org.mipams.jpegtrust.entities.assertions.cawg.IdentityAssertion.SignerPayload;
@@ -11,10 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,17 +22,15 @@ import org.mipams.jpegtrust.cose.CoseUtils;
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
 import org.mipams.jpegtrust.entities.assertions.Assertion;
 import org.mipams.jpegtrust.entities.assertions.BindingAssertion;
-import org.mipams.jpegtrust.entities.assertions.actions.ActionAssertion;
-import org.mipams.jpegtrust.entities.assertions.actions.ActionsAssertion;
-import org.mipams.jpegtrust.entities.assertions.actions.ParametersMap;
-import org.mipams.jpegtrust.entities.assertions.enums.ActionChoice;
 import org.mipams.jpegtrust.entities.assertions.jpt.RightsAssertion;
 import org.mipams.jpegtrust.entities.validation.trustindicators.TrustIndicatorSet;
 import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentType;
+import org.mipams.jpegtrust.services.JumbfBoxDigestService;
 import org.mipams.jpegtrust.services.validation.consumer.ManifestStoreConsumer;
 import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery;
 import org.mipams.jpegtrust.utils.CryptoUtils;
 import org.mipams.jpegtrust.utils.Utils;
+import org.mipams.jpegtrust.v2.claimgenerator.ManifestScenarios;
 import org.mipams.jumbf.config.JumbfConfig;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.services.Jp2CodestreamGenerator;
@@ -65,6 +61,9 @@ public class IdentityAssertionTest {
 
     @Autowired
     ManifestStoreConsumer manifestStoreConsumer;
+
+    @Autowired
+    JumbfBoxDigestService jumbfBoxDigestService;
 
     @Test
     void testIdentityAssertionJpeg1() throws Exception {
@@ -118,16 +117,8 @@ public class IdentityAssertionTest {
     }
 
     private JumbfBox constructTrustRecordForScenario(String assetFileUrl, String mediaType) throws Exception {
-        ActionAssertion assertion1 = new ActionAssertion();
-        assertion1.setAction(ActionChoice.C2PA_CREATED.getValue());
-        assertion1.setSoftwareAgent("Image Editing Tool");
-        assertion1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        ParametersMap map = new ParametersMap();
-        map.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
-        assertion1.setParameters(map);
 
-        ActionsAssertion actions = new ActionsAssertion();
-        actions.setActions(List.of(assertion1));
+        Assertion actions = ManifestScenarios.getInitialActions();
 
         RightsAssertion rightsAssertion = new RightsAssertion();
         rightsAssertion.setPayload(getOdrlRightsDeclaration());
@@ -142,10 +133,15 @@ public class IdentityAssertionTest {
         placeHolderContentBindingAssertion.setPadding(pad);
 
         final ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());
-        builder.addCreatedAssertion(actions);
-        builder.addCreatedAssertion(rightsAssertion);
-        builder.addCreatedAssertion(placeHolderContentBindingAssertion);
-        builder.addCreatedAssertion(identityAssertion);
+
+        for (Assertion assertion : List.of(actions, rightsAssertion, placeHolderContentBindingAssertion,
+                identityAssertion)) {
+            JumbfBox assertionBox = assertion.toJumbfBox();
+            DigestResultForJumbfBox digestResult = jumbfBoxDigestService
+                    .calculateDigestForJumbfBox(assertionBox);
+
+            builder.addCreatedAssertion(assertionBox, digestResult);
+        }
 
         builder.setTitle("MIPAMS test image");
         builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
@@ -164,7 +160,12 @@ public class IdentityAssertionTest {
                 totalBytesRequired);
 
         builder.removeCreatedAssertion(AssertionDiscovery.MipamsAssertion.CONTENT_BINDING.getBaseLabel());
-        builder.addCreatedAssertion(finalizedContentBindingAssertion);
+
+        JumbfBox assertionBox = finalizedContentBindingAssertion.toJumbfBox();
+        DigestResultForJumbfBox digestResult = jumbfBoxDigestService
+                .calculateDigestForJumbfBox(assertionBox);
+
+        builder.addCreatedAssertion(assertionBox, digestResult);
 
         builder.removeCreatedAssertion(AssertionDiscovery.MipamsAssertion.CAWG_IDENTIY.getBaseLabel());
 
@@ -175,7 +176,8 @@ public class IdentityAssertionTest {
         identitySignature.initSign(privKey);
         identitySignature.update(getVCUnprotectedPart());
 
-        byte[] signaturePayload = CoseUtils.toIdentityAssertionCose(getVCUnprotectedPart(), identitySignature.sign());
+        byte[] signaturePayload = CoseUtils.toIdentityAssertionCose(getVCUnprotectedPart(),
+                identitySignature.sign());
 
         int signatureSize = signaturePayload.length;
         int sizeOfUpdatedPadding = identityAssertion.getPad1().length - (signatureSize
@@ -192,12 +194,16 @@ public class IdentityAssertionTest {
         Arrays.fill(identityPad, Byte.parseByte("0"));
         identityAssertion.setPad1(identityPad);
 
-        builder.addCreatedAssertion(identityAssertion);
+        JumbfBox finalIdentityAssertionBox = identityAssertion.toJumbfBox();
+        digestResult = jumbfBoxDigestService
+                .calculateDigestForJumbfBox(finalIdentityAssertionBox);
+
+        builder.addCreatedAssertion(finalIdentityAssertionBox, digestResult);
 
         Signature signature = Signature.getInstance("SHA256withECDSA");
         signature.initSign(privKey);
         signature.update(builder.encodeClaimToBeSigned());
-        builder.setClaimSignature(signature.sign());
+        builder.setClaimSignature(CryptoUtils.decodeFromDER(signature.sign(), 32));
 
         JumbfBox trustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
         return trustRecord;

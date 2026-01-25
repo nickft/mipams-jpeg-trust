@@ -14,7 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mipams.jpegtrust.builders.ManifestBuilderV1;
 import org.mipams.jpegtrust.config.JpegTrustConfig;
+import org.mipams.jpegtrust.entities.DigestResultForJumbfBox;
+import org.mipams.jpegtrust.entities.HashedUriReference;
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
+import org.mipams.jpegtrust.entities.assertions.Assertion;
 import org.mipams.jpegtrust.entities.assertions.BindingAssertion;
 import org.mipams.jpegtrust.entities.assertions.actions.ActionAssertionV1;
 import org.mipams.jpegtrust.entities.assertions.actions.ActionsAssertionV1;
@@ -24,10 +27,12 @@ import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertionV
 import org.mipams.jpegtrust.entities.validation.trustindicators.TrustIndicatorSet;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentType;
+import org.mipams.jpegtrust.services.JumbfBoxDigestService;
 import org.mipams.jpegtrust.services.validation.consumer.ManifestStoreConsumer;
 import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery;
 import org.mipams.jpegtrust.utils.CryptoUtils;
 import org.mipams.jpegtrust.utils.Utils;
+import org.mipams.jpegtrust.v1.claimgenerator.ManifestScenarios;
 import org.mipams.jumbf.config.JumbfConfig;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.services.Jp2CodestreamGenerator;
@@ -57,6 +62,9 @@ public class RedactedAssertionTest {
 
     @Autowired
     ManifestStoreConsumer manifestStoreConsumer;
+
+    @Autowired
+    JumbfBoxDigestService jumbfBoxDigestService;
 
     @Test
     void testRedactingAssertionJpeg1() throws Exception {
@@ -110,18 +118,25 @@ public class RedactedAssertionTest {
     }
 
     private JumbfBox constructTrustRecordForScenario(String assetFileUrl, String mediaType) throws Exception {
+        JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl, mediaType);
+
         ActionAssertionV1 action1 = new ActionAssertionV1();
         action1.setAction(ActionChoice.C2PA_OPENED.getValue());
         action1.setSoftwareAgent("Image Editing Tool");
         action1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
 
-        ActionAssertionV1 action2 = new ActionAssertionV1();
-        action2.setAction(ActionChoice.C2PA_FILTERED.getValue());
-        action2.setSoftwareAgent("Image Editing Tool");
-        action2.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+        final DigestResultForJumbfBox locallyComputedHash = jumbfBoxDigestService
+                .calculateDigestForJumbfBox(ingredientManifest);
+        final HashedUriReference hashedUriReference = new HashedUriReference();
+        hashedUriReference
+                .setUrl(String.format("self#jumbf=c2pa.assertions/c2pa.ingredient"));
+        hashedUriReference.setAlgorithm(locallyComputedHash.getAlgorithm());
+        hashedUriReference.setDigest(locallyComputedHash.getDigest());
+
+        action1.setParameters(Map.of("ingredient", hashedUriReference));
 
         ActionsAssertionV1 actions = new ActionsAssertionV1();
-        actions.setActions(List.of(action1, action2));
+        actions.setActions(List.of(action1));
 
         final BindingAssertion tempBindingAssertion = new BindingAssertion();
         tempBindingAssertion.setAlgorithm("sha256");
@@ -130,11 +145,8 @@ public class RedactedAssertionTest {
         Arrays.fill(pad, Byte.parseByte("0"));
         tempBindingAssertion.setPadding(pad);
 
-        final IngredientAssertionV1 ingredientAssertion = new IngredientAssertionV1();
-        ingredientAssertion.setRelationship(IngredientAssertionV1.RELATIONSHIP_PARENT_OF);
-        ingredientAssertion.setInstanceId("ab610ae5124002be3dbf0c589a2f1f");
-        ingredientAssertion.setTitle("Ingredient manifest");
-        ingredientAssertion.setMediaType(mediaType);
+        final IngredientAssertionV1 ingredientAssertion = ManifestScenarios.getIngredientAssertion(ingredientManifest,
+                jumbfBoxDigestService, mediaType);
 
         final ManifestBuilderV1 builder = new ManifestBuilderV1(new StandardManifestContentType());
         builder.setTitle("MIPAMS test image with ingredient");
@@ -146,10 +158,13 @@ public class RedactedAssertionTest {
         List<X509Certificate> certificates = CryptoUtils.getCertificate();
         builder.setClaimSignatureCertificates(certificates);
 
-        builder.addAssertion(actions);
-        builder.addAssertion(tempBindingAssertion);
+        for (Assertion assertion : List.of(actions, ingredientAssertion, tempBindingAssertion)) {
+            JumbfBox assertionBox = assertion.toJumbfBox();
+            DigestResultForJumbfBox digestResult = jumbfBoxDigestService
+                    .calculateDigestForJumbfBox(assertionBox);
 
-        JumbfBox ingredientManifest = getIngredientManifest(assetFileUrl, mediaType);
+            builder.addAssertion(assertionBox, digestResult);
+        }
 
         String redactedUri = String.format("self#jumbf=/c2pa/%s/%s/cawg.metadata",
                 ingredientManifest.getDescriptionBox().getLabel(),
@@ -166,8 +181,6 @@ public class RedactedAssertionTest {
 
         assertionStoreJumbfBox.updateFieldsBasedOnExistingData();
 
-        builder.addIngredientAssertion(ingredientAssertion, ingredientManifest);
-
         JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(ingredientManifest, builder.build());
         long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
                 ? tempTrustRecord.getBoxSizeFromBmffHeaders()
@@ -177,7 +190,12 @@ public class RedactedAssertionTest {
                 totalBytesRequired);
 
         builder.removeAssertion(AssertionDiscovery.MipamsAssertion.CONTENT_BINDING.getBaseLabel());
-        builder.addAssertion(contentBindingAssertion);
+
+        JumbfBox assertionBox = contentBindingAssertion.toJumbfBox();
+        DigestResultForJumbfBox digestResult = jumbfBoxDigestService
+                .calculateDigestForJumbfBox(assertionBox);
+
+        builder.addAssertion(assertionBox, digestResult);
 
         PrivateKey privKey = CryptoUtils
                 .getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
@@ -185,66 +203,23 @@ public class RedactedAssertionTest {
         Signature signature = Signature.getInstance("SHA256withECDSA");
         signature.initSign(privKey);
         signature.update(builder.encodeClaimToBeSigned());
-        builder.setClaimSignature(signature.sign());
+        builder.setClaimSignature(CryptoUtils.decodeFromDER(signature.sign(), 32));
 
         JumbfBox trustRecord = JpegTrustUtils.buildTrustRecord(ingredientManifest, builder.build());
         return trustRecord;
     }
 
     private JumbfBox getIngredientManifest(String assetFileUrl, String mediaType) throws Exception {
-        ActionAssertionV1 assertion1 = new ActionAssertionV1();
-        assertion1.setAction(ActionChoice.C2PA_CREATED.getValue());
-        assertion1.setSoftwareAgent("Image Editing Tool");
-        assertion1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        assertion1.setParameters(Map.of("instanceID", "ed610ae51f604002be3dbf0c589a2f1f"));
+        ManifestScenarios manifestScenarios = new ManifestScenarios();
+        manifestScenarios.setJumbfBoxDigestService(jumbfBoxDigestService);
 
-        ActionsAssertionV1 actions = new ActionsAssertionV1();
-        actions.setActions(List.of(assertion1));
+        Assertion actions = ManifestScenarios.getInitialActions();
 
         MetadataAssertion assertion = new MetadataAssertion();
         assertion.setPayload(getCawgMetadataPayload());
 
-        final BindingAssertion tempBindingAssertion = new BindingAssertion();
-        tempBindingAssertion.setAlgorithm("sha256");
-        tempBindingAssertion.addExclusionRange(0, 0);
-        byte[] pad = new byte[6];
-        Arrays.fill(pad, Byte.parseByte("0"));
-        tempBindingAssertion.setPadding(pad);
-
-        final ManifestBuilderV1 builder = new ManifestBuilderV1(new StandardManifestContentType());
-        builder.addAssertion(actions);
-        builder.addAssertion(assertion);
-        builder.addAssertion(tempBindingAssertion);
-
-        builder.setTitle("MIPAMS test image");
-        builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
-        builder.setMediaType(mediaType);
-        builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
-        builder.setAlgorithm("sha256");
-
-        List<X509Certificate> certificates = CryptoUtils.getCertificate();
-        builder.setClaimSignatureCertificates(certificates);
-
-        JumbfBox tempTrustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
-        long totalBytesRequired = (mediaType.endsWith("jxl") || assetFileUrl.endsWith("jp2"))
-                ? tempTrustRecord.getBoxSizeFromBmffHeaders()
-                : JpegTrustUtils.getSizeOfJumbfInApp11SegmentsInBytes(tempTrustRecord);
-
-        BindingAssertion contentBindingAssertion = Utils.getBindingAssertionForAsset(assetFileUrl,
-                totalBytesRequired);
-
-        builder.removeAssertion(AssertionDiscovery.MipamsAssertion.CONTENT_BINDING.getBaseLabel());
-        builder.addAssertion(contentBindingAssertion);
-
-        PrivateKey privKey = CryptoUtils
-                .getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
-
-        Signature signature = Signature.getInstance("SHA256withECDSA");
-        signature.initSign(privKey);
-        signature.update(builder.encodeClaimToBeSigned());
-        builder.setClaimSignature(signature.sign());
-
-        return builder.build();
+        return manifestScenarios.getManifestWithAssertions(assetFileUrl, mediaType,
+                List.of(actions, assertion));
     }
 
     private byte[] getCawgMetadataPayload() {
