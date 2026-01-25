@@ -20,7 +20,7 @@ Once the org.mipams.jpeg-trust library has been successfully installed in the lo
 <dependency>
     <groupId>org.mipams</groupId>
     <artifactId>jpeg-trust</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 </dependency>
 ```
 
@@ -45,12 +45,13 @@ ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType())
 // in the variables actionAssertion and contentBindingAssertion respectively.
 // ...
 
-builder.addCreatedAssertion(actionAssertion);
-builder.addCreatedAssertion(contentBindingAssertion);
+builder.addCreatedAssertion(actionAssertion, actionAssertionDigest);
+builder.addCreatedAssertion(contentBindingAssertion, contentBindingAssertionDigest);
 
 builder.setTitle("MIPAMS test image");
 builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
 builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
+builder.setAlgorithm("sha256");
 
 // Include the associated list of certificates 
 // associated with the private key used for signing the claim
@@ -60,6 +61,7 @@ byte[] encodedClaim = builder.encodeClaimToBeSigned();
 
 // Application-specific logic to digitally sign the encodedClaim object and produce 
 // the resulted signature as an array of bytes in the variable claimSignature.
+// The signature is stored as raw signature bytes (i.e., not as an ASN.1/DER-encoded structure).
 // ...
 
 builder.setClaimSignature(claimSignature);
@@ -109,3 +111,4 @@ public TrustIndicatorSet validateTrustRecordAndExtractTrustIndicatorSet(JumbfBox
 |Ingredient validation results | The library does not take into consideration metadata concerning the validation of ingredient assertions. It goes and validates them from scratch. |
 |Assertion-specific validation (e.g., Actions, Metadata, Ingredients) | Constraints pertaining to the assertion-specific requirements are not implemented yet.|
 |Not checking date formats | No constraint pertaining to the date formats is taken into consideration.|
+|TSA Countersignature | TSA countersignature in the Claim structure is not processed and is not validated. |
