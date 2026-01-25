@@ -23,7 +23,7 @@ public class IngredientAssertion extends CborAssertion {
     @JsonProperty("relationship")
     private String relationship;
 
-    @JsonProperty("validationResultsMap")
+    @JsonProperty("validationResults")
     private ValidationResultsMap validationResults;
 
     @JsonProperty("instanceID")

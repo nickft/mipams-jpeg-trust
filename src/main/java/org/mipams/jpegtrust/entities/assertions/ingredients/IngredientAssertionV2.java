@@ -9,7 +9,10 @@ import org.mipams.jpegtrust.entities.assertions.metadata.StatusMap;
 import org.mipams.jumbf.util.MipamsException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({ "dc:title", "dc:format", "relationship", "documentID", "instanceID", "data", "data_types",
+        "c2pa_manifest", "thumbnail", "validationStatus", "description", "informational_URI", "metadata" })
 public class IngredientAssertionV2 extends CborAssertion {
 
     @Override
@@ -115,10 +118,12 @@ public class IngredientAssertionV2 extends CborAssertion {
         this.dataTypes = dataTypes;
     }
 
+    @JsonProperty("c2pa_manifest")
     public HashedUriReference getIngredientReference() {
         return ingredientReference;
     }
 
+    @JsonProperty("c2pa_manifest")
     public void setIngredientReference(HashedUriReference ingredientReference) {
         this.ingredientReference = ingredientReference;
     }

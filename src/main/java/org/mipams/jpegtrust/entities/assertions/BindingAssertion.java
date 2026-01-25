@@ -18,6 +18,8 @@ public class BindingAssertion extends CborAssertion {
     private byte[] digest = new byte[32];
     @JsonProperty("pad")
     private byte[] padding = new byte[30];
+    @JsonProperty("pad2")
+    private byte[] padding2 = new byte[0];
     private String name;
 
     @Override
@@ -51,6 +53,14 @@ public class BindingAssertion extends CborAssertion {
 
     public void setPadding(byte[] padding) {
         this.padding = padding;
+    }
+
+    public byte[] getPadding2() {
+        return padding2;
+    }
+
+    public void setPadding2(byte[] padding) {
+        this.padding2 = padding;
     }
 
     public byte[] getDigest() {

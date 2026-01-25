@@ -1,10 +1,11 @@
 package org.mipams.jpegtrust.entities.assertions.ingredients;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ValidationResultsMap {
     private StatusCodesMap activeManifest;
-    private List<IngredientDeltaValidationResultMap> ingredientDeltas;
+    private List<IngredientDeltaValidationResultMap> ingredientDeltas = new ArrayList<>();
 
     public StatusCodesMap getActiveManifest() {
         return activeManifest;

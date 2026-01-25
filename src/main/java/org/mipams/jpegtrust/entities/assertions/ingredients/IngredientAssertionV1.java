@@ -5,11 +5,13 @@ import java.util.List;
 import org.mipams.jpegtrust.entities.HashedUriReference;
 import org.mipams.jpegtrust.entities.assertions.CborAssertion;
 import org.mipams.jpegtrust.entities.assertions.metadata.AssertionMetadata;
-import org.mipams.jpegtrust.entities.assertions.metadata.StatusMap;
 import org.mipams.jumbf.util.MipamsException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({ "dc:title", "dc:format", "documentID", "instanceID", "relationship", "c2pa_manifest", "thumbnail",
+        "validationStatus", "metadata" })
 public class IngredientAssertionV1 extends CborAssertion {
 
     public final static String RELATIONSHIP_PARENT_OF = "parentOf";
@@ -35,7 +37,6 @@ public class IngredientAssertionV1 extends CborAssertion {
 
     private String relationship;
 
-    @JsonProperty("c2pa_manifest")
     private HashedUriReference ingredientReference;
 
     private HashedUriReference thumbnail;
@@ -90,10 +91,12 @@ public class IngredientAssertionV1 extends CborAssertion {
         this.relationship = relationship;
     }
 
+    @JsonProperty("c2pa_manifest")
     public HashedUriReference getManifestReference() {
         return ingredientReference;
     }
 
+    @JsonProperty("c2pa_manifest")
     public void setManifestReference(HashedUriReference manifestReference) {
         this.ingredientReference = manifestReference;
     }
@@ -104,6 +107,14 @@ public class IngredientAssertionV1 extends CborAssertion {
 
     public void setThumbnail(HashedUriReference thumbnail) {
         this.thumbnail = thumbnail;
+    }
+
+    public List<StatusMap> getValidationStatus() {
+        return validationStatus;
+    }
+
+    public void setValidationStatus(List<StatusMap> validationStatus) {
+        this.validationStatus = validationStatus;
     }
 
     public AssertionMetadata getMetadata() {

@@ -10,7 +10,7 @@ public class ActionAssertionV1 {
     private String changed;
     private String instanceID;
     private List<ActionAssertionV1> related;
-    private Map<String, String> parameters;
+    private Map<String, Object> parameters;
     private String digitalSourceType;
 
     public String getAction() {
@@ -61,11 +61,11 @@ public class ActionAssertionV1 {
         this.when = when;
     }
 
-    public Map<String, String> getParameters() {
+    public Map<String, Object> getParameters() {
         return parameters;
     }
 
-    public void setParameters(Map<String, String> parameters) {
+    public void setParameters(Map<String, Object> parameters) {
         this.parameters = parameters;
     }
 

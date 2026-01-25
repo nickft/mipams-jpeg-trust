@@ -1,35 +1,37 @@
 package org.mipams.jpegtrust.entities.assertions.ingredients;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import org.mipams.jpegtrust.entities.validation.ValidationCode;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class StatusCodesMap {
-    private List<ValidationCode> success;
-    private List<ValidationCode> informational;
-    private List<ValidationCode> failure;
+    private List<StatusMap> success = new ArrayList<>();
+    private List<StatusMap> informational = new ArrayList<>();
+    private List<StatusMap> failure = new ArrayList<>();
 
-    public List<ValidationCode> getSuccess() {
+    public List<StatusMap> getSuccess() {
         return success;
     }
 
-    public void setSuccess(List<ValidationCode> success) {
+    public void setSuccess(List<StatusMap> success) {
         this.success = success;
     }
 
-    public List<ValidationCode> getInformational() {
+    public List<StatusMap> getInformational() {
         return informational;
     }
 
-    public void setInformational(List<ValidationCode> informational) {
+    public void setInformational(List<StatusMap> informational) {
         this.informational = informational;
     }
 
-    public List<ValidationCode> getFailure() {
+    public List<StatusMap> getFailure() {
         return failure;
     }
 
-    public void setFailure(List<ValidationCode> failure) {
+    public void setFailure(List<StatusMap> failure) {
         this.failure = failure;
     }
 }
