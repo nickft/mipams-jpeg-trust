@@ -117,7 +117,7 @@ public class ManifestConsumer {
                         .extractHashAlgorithmFromClaim(claimStructureToBeSigned);
 
                 try {
-                    claimSignatureConsumer.validateSignature(claimSignatureJumbfBox, claimStructureToBeSigned);
+                    claimSignatureConsumer.validateSignature(claimSignatureJumbfBox, claimJumbfBox);
                     validationStatusIndicators.setSignatureStatus(ValidationCode.CLAIM_SIGNATURE_VALIDATED);
                     String claimSignatureUri = JpegTrustUtils.getProvenanceJumbfURL(manifestUuid,
                             claimSignatureContentType.getLabel());
@@ -239,8 +239,10 @@ public class ManifestConsumer {
 
         Map<String, HashedUriReference> result = new HashMap<>();
         for (Assertion assertion : ingredientAssertions) {
-            HashedUriReference ref = assertionDiscovery.extractTargetManifestFromIngredient(assertion);
-            result.put(ref.getUrl(), ref);
+            Optional<HashedUriReference> ref = assertionDiscovery.extractTargetManifestFromIngredient(assertion);
+            if (ref.isPresent()) {
+                result.put(ref.get().getUrl(), ref.get());
+            }
         }
 
         return result;
@@ -267,10 +269,16 @@ public class ManifestConsumer {
         TrustManifestContentType contentType = manifestDiscovery.discoverManifestType(currentManifest);
 
         while (manifestDiscovery.isUpdateManifestRequest(contentType)) {
-            String url = assertionDiscovery
+            Optional<HashedUriReference> hashedUri = assertionDiscovery
                     .extractTargetManifestFromIngredient(assertionConsumer
-                            .collectIngredientAssertions(currentManifest).getFirst())
-                    .getUrl();
+                            .collectIngredientAssertions(currentManifest).getFirst());
+
+            if (hashedUri.isEmpty()) {
+                throw new ValidationException();
+            }
+
+            String url = hashedUri.get().getUrl();
+
             Optional<JumbfBox> result = JumbfUriUtils.getJumbfBoxFromAbsoluteUri(url, manifestStoreJumbfBox);
             if (result.isEmpty()) {
                 throw new ValidationException();

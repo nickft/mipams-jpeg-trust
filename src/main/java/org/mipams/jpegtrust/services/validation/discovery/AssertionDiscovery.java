@@ -1,5 +1,7 @@
 package org.mipams.jpegtrust.services.validation.discovery;
 
+import java.util.Optional;
+
 import org.mipams.jpegtrust.entities.HashedUriReference;
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
 import org.mipams.jpegtrust.entities.assertions.Assertion;
@@ -66,8 +68,7 @@ public class AssertionDiscovery {
             }
 
             for (MipamsAssertion type : values()) {
-
-                if (label.startsWith(type.getBaseLabel())) {
+                if (label.equals(type.getBaseLabel()) || label.startsWith(String.format("%s__", type.getBaseLabel()))) {
                     result = type;
                     break;
                 }
@@ -203,18 +204,34 @@ public class AssertionDiscovery {
         return result;
     }
 
-    public HashedUriReference extractTargetManifestFromIngredient(Assertion assertion) throws MipamsException {
-        HashedUriReference ref;
+    public Optional<HashedUriReference> extractTargetManifestFromIngredient(Assertion assertion)
+            throws MipamsException {
+        HashedUriReference ref = null;
         if (assertion.getClass().equals(IngredientAssertion.class)) {
-            ref = ((IngredientAssertion) assertion).getActiveManifestOfIngredient();
+            IngredientAssertion ingredientAssertionV3 = (IngredientAssertion) assertion;
+
+            if (ingredientAssertionV3.getActiveManifestOfIngredient() != null) {
+                ref = ingredientAssertionV3.getActiveManifestOfIngredient();
+            }
         } else if (assertion.getClass().equals(IngredientAssertionV1.class)) {
-            ref = ((IngredientAssertionV1) assertion).getManifestReference();
+
+            IngredientAssertionV1 ingredientAssertionV1 = (IngredientAssertionV1) assertion;
+
+            if (ingredientAssertionV1.getManifestReference() != null) {
+                ref = ingredientAssertionV1.getManifestReference();
+            }
+
         } else if (assertion.getClass().equals(IngredientAssertionV2.class)) {
-            ref = ((IngredientAssertionV2) assertion).getIngredientReference();
+            IngredientAssertionV2 ingredientAssertionV2 = (IngredientAssertionV2) assertion;
+
+            if (ingredientAssertionV2.getIngredientReference() != null) {
+                ref = ingredientAssertionV2.getIngredientReference();
+            }
         } else {
             throw new MipamsException(ValidationCode.GENERAL_ERROR.getCode());
         }
-        return ref;
+
+        return ref != null ? Optional.of(ref) : Optional.empty();
     }
 
     public String extractIngredientProfile(Assertion assertion) throws MipamsException {

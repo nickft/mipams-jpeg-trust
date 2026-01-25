@@ -1,6 +1,5 @@
 package org.mipams.jpegtrust.utils;
 
-
 import java.util.Arrays;
 
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
@@ -84,5 +83,4 @@ public class Utils {
                 : signatureBoxSizeInBytes + fileTypeBoxSizeInBytes + levelBoxSizeInBytes;
 
     }
-
 }
