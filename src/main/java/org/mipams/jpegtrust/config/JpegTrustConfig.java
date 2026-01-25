@@ -10,6 +10,7 @@ import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentTy
 import org.mipams.jpegtrust.jpeg_systems.content_types.TrustDeclarationContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.TrustRecordContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.UpdateManifestContentType;
+import org.mipams.jpegtrust.services.JumbfBoxDigestService;
 import org.mipams.jpegtrust.services.validation.consumer.AssertionConsumer;
 import org.mipams.jpegtrust.services.validation.consumer.ClaimConsumer;
 import org.mipams.jpegtrust.services.validation.consumer.ClaimSignatureConsumer;
@@ -69,48 +70,53 @@ public class JpegTrustConfig {
         return new UpdateManifestContentType();
     }
 
-    @Bean 
+    @Bean
     public SaltHashBoxService saltHashBoxService() {
         return new SaltHashBoxService();
     }
 
-    @Bean 
+    @Bean
     public AssertionConsumer assertionConsumer() {
         return new AssertionConsumer();
     }
 
-    @Bean 
+    @Bean
     public AssertionDiscovery assertionDiscovery() {
         return new AssertionDiscovery();
     }
 
-    @Bean 
+    @Bean
     public ClaimConsumer claimConsumer() {
         return new ClaimConsumer();
     }
 
-    @Bean 
+    @Bean
     public ClaimSignatureConsumer claimSignatureConsumer() {
         return new ClaimSignatureConsumer();
     }
 
-    @Bean 
+    @Bean
     public ManifestConsumer manifestConsumer() {
         return new ManifestConsumer();
     }
 
-    @Bean 
+    @Bean
     public ManifestDiscovery manifestDiscovery() {
         return new ManifestDiscovery();
     }
 
-    @Bean 
+    @Bean
     public ManifestStoreConsumer manifestStoreConsumer() {
         return new ManifestStoreConsumer();
     }
 
-    @Bean 
+    @Bean
     public UriReferenceService uriReferenceService() {
         return new UriReferenceService();
+    }
+
+    @Bean
+    public JumbfBoxDigestService jumbfBoxDigestService() {
+        return new JumbfBoxDigestService();
     }
 }
