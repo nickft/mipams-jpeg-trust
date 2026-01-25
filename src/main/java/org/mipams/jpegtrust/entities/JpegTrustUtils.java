@@ -3,14 +3,13 @@ package org.mipams.jpegtrust.entities;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,90 +62,63 @@ public class JpegTrustUtils {
         return trustRecord.getBoxSizeFromBmffHeaders();
     }
 
-    public static byte[] computeSha256DigestOfFileContents(String filePath, List<ExclusionRange> ex)
-            throws MipamsException {
-        if (ex == null || ex.isEmpty()) {
-            return computeSha256DigestOfFileContents(filePath);
-        }
+    public static byte[] computeSha256DigestOfFileContents(String filePath, List<ExclusionRange> exclusions)
+            throws Exception {
 
-        List<ExclusionRange> sortedExclusionRanges = ex.stream()
-                .sorted(Comparator.comparingInt(ExclusionRange::getStart))
-                .collect(Collectors.toList());
-        int iteratorIndex = 0;
-        Iterator<ExclusionRange> exclusionRangeIterator = sortedExclusionRanges.stream().iterator();
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-        String tempFile = CoreUtils.randomStringGenerator();
-        String tempFilePath = CoreUtils.createTempFile(tempFile, CoreUtils.JUMBF_FILENAME_SUFFIX);
-        try (FileInputStream fis = new FileInputStream(filePath)) {
+        List<ExclusionRange> sortedRanges = exclusions != null ? exclusions.stream()
+                .sorted(Comparator.comparingLong(ExclusionRange::getStart))
+                .toList() : List.of();
 
-            try (FileOutputStream outputStream = new FileOutputStream(tempFilePath)) {
-                byte[] buffer = new byte[128];
+        try (InputStream fis = new FileInputStream(filePath)) {
+            byte[] buffer = new byte[4096];
+            long fileOffset = 0;
+            int rangeIndex = 0;
+            int bytesRead;
 
-                Optional<ExclusionRange> range = getNextEligibleExclusionRange(exclusionRangeIterator, iteratorIndex);
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                int start = 0;
 
-                while (fis.available() > 0) {
-                    int l = fis.read(buffer);
+                while (rangeIndex < sortedRanges.size()) {
+                    ExclusionRange r = sortedRanges.get(rangeIndex);
+                    long rangeStart = r.getStart();
+                    long rangeEnd = r.getStart() + r.getLength();
 
-                    byte[] eligibleBytes = filterExclusionRangeBytes(buffer, range, iteratorIndex, l);
-                    iteratorIndex += l;
-
-                    if (eligibleBytes.length > 0) {
-                        outputStream.write(eligibleBytes);
+                    if (rangeEnd <= fileOffset) {
+                        rangeIndex++;
+                        continue;
                     }
 
-                    if (range.isPresent() && isExlusionRangeObsolete(range.get(), iteratorIndex)) {
-                        range = getNextEligibleExclusionRange(exclusionRangeIterator, iteratorIndex);
+                    if (rangeStart >= fileOffset + bytesRead) {
+                        break;
+                    }
+
+                    int overlapStart = (int) Math.max(rangeStart - fileOffset, 0);
+                    int overlapEnd = (int) Math.min(rangeEnd - fileOffset, bytesRead);
+
+                    if (overlapStart > start) {
+                        digest.update(buffer, start, overlapStart - start);
+                    }
+
+                    start = overlapEnd;
+
+                    if (rangeEnd <= fileOffset + bytesRead) {
+                        rangeIndex++;
+                    } else {
+                        break;
                     }
                 }
-            }
 
-            return computeSha256DigestOfFileContents(tempFilePath);
-        } catch (Exception e) {
-            throw new MipamsException(e);
-        } finally {
-            CoreUtils.deleteFile(tempFilePath);
-        }
-    }
-
-    private static Optional<ExclusionRange> getNextEligibleExclusionRange(
-            Iterator<ExclusionRange> exclusionRangeIterator, long iteratorIndex) {
-        ExclusionRange range = null;
-        while (exclusionRangeIterator.hasNext()) {
-            range = exclusionRangeIterator.next();
-
-            if (!isExlusionRangeObsolete(range, iteratorIndex)) {
-                return Optional.of(range);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private static boolean isExlusionRangeObsolete(ExclusionRange range, long iteratorIndex) {
-        return range.getStart() + range.getLength() < iteratorIndex;
-    }
-
-    private static byte[] filterExclusionRangeBytes(byte[] buffer, Optional<ExclusionRange> range,
-            int absoluteStartIndex, int size) throws Exception {
-        if (range.isEmpty()) {
-            byte[] resultBuffer = new byte[size];
-            System.arraycopy(buffer, 0, resultBuffer, 0, size);
-            return resultBuffer;
-        }
-
-        try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream();) {
-            for (int i = 0; i < size; i++) {
-
-                if (absoluteStartIndex + i >= range.get().getStart() && absoluteStartIndex
-                        + i < range.get().getStart() + range.get().getLength()) {
-                    continue;
+                if (start < bytesRead) {
+                    digest.update(buffer, start, bytesRead - start);
                 }
 
-                byteStream.write(buffer[i]);
+                fileOffset += bytesRead;
             }
-
-            return byteStream.toByteArray();
         }
+
+        return digest.digest();
     }
 
     public static JumbfBox buildTrustRecord(JumbfBox... manifests) throws MipamsException {
@@ -247,7 +219,7 @@ public class JpegTrustUtils {
         }
     }
 
-    public static byte[] calculateDigestForJumbfBox(JumbfBox jumbfBox) throws MipamsException {
+    public static byte[] calculateDigestForJumbfBox1(JumbfBox jumbfBox) throws MipamsException {
         String tempFilePath = "";
         try {
 
@@ -337,5 +309,38 @@ public class JpegTrustUtils {
 
         long totalApp11SegmentsSize = jpegXtHeaderSize - jumbfBoxHeaderSize + jpegXtHeaderSize * (totalSegments - 1);
         return totalApp11SegmentsSize + jumbfBoxSize;
+    }
+
+    public static byte[] encodeToDER(byte[] rawSignature) throws Exception {
+        int len = rawSignature.length / 2;
+        byte[] rBytes = new byte[len];
+        byte[] sBytes = new byte[len];
+
+        System.arraycopy(rawSignature, 0, rBytes, 0, len);
+        System.arraycopy(rawSignature, len, sBytes, 0, len);
+
+        BigInteger r = new BigInteger(1, rBytes);
+        BigInteger s = new BigInteger(1, sBytes);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(0x30);
+
+        ByteArrayOutputStream content = new ByteArrayOutputStream();
+
+        byte[] rEncoded = r.toByteArray();
+        content.write(0x02);
+        content.write(rEncoded.length);
+        content.write(rEncoded);
+
+        byte[] sEncoded = s.toByteArray();
+        content.write(0x02);
+        content.write(sEncoded.length);
+        content.write(sEncoded);
+
+        byte[] contentBytes = content.toByteArray();
+        baos.write(contentBytes.length);
+        baos.write(contentBytes);
+
+        return baos.toByteArray();
     }
 }

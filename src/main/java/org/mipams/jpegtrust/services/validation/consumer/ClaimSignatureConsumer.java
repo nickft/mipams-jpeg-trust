@@ -21,7 +21,7 @@ import java.util.Map;
 import javax.security.auth.x500.X500Principal;
 
 import org.mipams.jpegtrust.cose.CoseUtils;
-import org.mipams.jpegtrust.entities.ProvenanceEntity;
+import org.mipams.jpegtrust.entities.JpegTrustUtils;
 import org.mipams.jpegtrust.entities.validation.ValidationCode;
 import org.mipams.jpegtrust.entities.validation.ValidationException;
 import org.mipams.jpegtrust.entities.validation.trustindicators.ClaimSignatureIndicators;
@@ -30,6 +30,9 @@ import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.util.MipamsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.authlete.cose.COSEProtectedHeader;
+import com.authlete.cose.COSEUnprotectedHeader;
 
 @Service
 public class ClaimSignatureConsumer {
@@ -46,6 +49,21 @@ public class ClaimSignatureConsumer {
         return claimSignature;
     }
 
+    public COSEProtectedHeader getClaimSignatureProtectedHeaderFromClaimSignatureBox(JumbfBox claimSignatureJumbfBox)
+            throws MipamsException {
+
+        CborBox claimSignatureContent = (CborBox) claimSignatureJumbfBox.getContentBoxList().get(0);
+        return CoseUtils.extractProtectedHeaderFromCoseSign1(claimSignatureContent.getContent());
+    }
+
+    public COSEUnprotectedHeader getClaimSignatureUnprotectedHeaderFromClaimSignatureBox(
+            JumbfBox claimSignatureJumbfBox)
+            throws MipamsException {
+
+        CborBox claimSignatureContent = (CborBox) claimSignatureJumbfBox.getContentBoxList().get(0);
+        return CoseUtils.extractUnprotectedHeaderFromCoseSign1(claimSignatureContent.getContent());
+    }
+
     public List<X509Certificate> getListOfCertificatesFromClaimSignatureBox(
             JumbfBox claimSignatureJumbfBox) throws MipamsException {
 
@@ -54,13 +72,20 @@ public class ClaimSignatureConsumer {
 
     }
 
-    public void validateSignature(JumbfBox claimSignatureJumbfBox, ProvenanceEntity claim)
+    public void validateSignature(JumbfBox claimSignatureJumbfBox, JumbfBox claimJumbfBox)
             throws MipamsException {
         try {
             byte[] claimSignature = getClaimSignatureFromClaimSignatureBox(claimSignatureJumbfBox);
+            byte[] derClaimSignature = JpegTrustUtils.encodeToDER(claimSignature);
+
             List<X509Certificate> certificates = getListOfCertificatesFromClaimSignatureBox(claimSignatureJumbfBox);
 
-            byte[] encodedClaim = CoseUtils.toSigStructure(claim, certificates);
+            byte[] cborClaimPayload = ((CborBox) claimJumbfBox.getContentBoxList().get(0)).getContent();
+
+            COSEProtectedHeader protectedHeader = getClaimSignatureProtectedHeaderFromClaimSignatureBox(
+                    claimSignatureJumbfBox);
+
+            byte[] encodedClaim = CoseUtils.produceCOSESigStructureFromTrustManifest(cborClaimPayload, protectedHeader);
 
             String publicKeyString = Base64.getEncoder()
                     .encodeToString(certificates.get(0).getPublicKey().getEncoded());
@@ -74,7 +99,7 @@ public class ClaimSignatureConsumer {
             signature.initVerify(pubKey);
             signature.update(encodedClaim);
 
-            boolean result = signature.verify(claimSignature);
+            boolean result = signature.verify(derClaimSignature);
 
             if (!result) {
                 throw new ValidationException(ValidationCode.SIGNING_CREDENTIAL_INVALID);
@@ -129,7 +154,7 @@ public class ClaimSignatureConsumer {
 
     private static Map<String, String> parseX500Principal(X500Principal principal) {
         Map<String, String> subjectMap = new LinkedHashMap<>();
-        String[] dnParts = principal.getName().split(",\\s*");
+        String[] dnParts = principal.getName().split(",\s*");
 
         for (String part : dnParts) {
             String[] keyValue = part.split("=", 2);

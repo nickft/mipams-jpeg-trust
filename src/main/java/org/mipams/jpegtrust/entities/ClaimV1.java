@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({ "dc:title", "dc:format", "instanceID", "claim_generator", "claim_generator_info", "signature",
-        "assertions" })
+@JsonPropertyOrder({ "claim_generator", "claim_generator_info", "signature", "assertions", "dc:format", "instanceID",
+        "dc:title", "redacted_assertions", "alg", "alg_soft", "metadata" })
 public class ClaimV1 implements ProvenanceEntity {
 
     @JsonProperty("claim_generator")
@@ -36,6 +36,9 @@ public class ClaimV1 implements ProvenanceEntity {
 
     @JsonProperty("alg")
     private String algorithm;
+
+    @JsonProperty("alg_soft")
+    private String algorithmSoftware;
 
     @JsonProperty("metadata")
     private AssertionMetadata metadata;
@@ -116,6 +119,14 @@ public class ClaimV1 implements ProvenanceEntity {
 
     public void setAlgorithm(String alg) {
         this.algorithm = alg;
+    }
+
+    public String getAlgorithmSoftware() {
+        return algorithmSoftware;
+    }
+
+    public void setAlgorithmSoftware(String algorithmSoftware) {
+        this.algorithmSoftware = algorithmSoftware;
     }
 
     public AssertionMetadata getMetadata() {

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 
+import org.mipams.jpegtrust.entities.DigestResultForJumbfBox;
 import org.mipams.jpegtrust.entities.HashedUriReference;
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
 import org.mipams.jpegtrust.entities.assertions.Assertion;
@@ -26,6 +27,7 @@ import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertionV
 import org.mipams.jpegtrust.entities.validation.ValidationCode;
 import org.mipams.jpegtrust.entities.validation.ValidationException;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
+import org.mipams.jpegtrust.services.JumbfBoxDigestService;
 import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery;
 import org.mipams.jpegtrust.services.validation.discovery.AssertionDiscovery.MipamsAssertion;
 import org.mipams.jumbf.entities.BmffBox;
@@ -49,6 +51,9 @@ public class AssertionConsumer {
 
     @Autowired
     CoreGeneratorService coreGeneratorService;
+
+    @Autowired
+    JumbfBoxDigestService jumbfBoxDigestService;
 
     public void validateContentBinding(JumbfBox manifestJumbfBox, String assetUrl) throws ValidationException {
 
@@ -74,7 +79,7 @@ public class AssertionConsumer {
             if (!Arrays.equals(assertion.getDigest(), digest)) {
                 throw new ValidationException(ValidationCode.ASSERTION_DATA_HASH_MISMATCH);
             }
-        } catch (MipamsException e) {
+        } catch (Exception e) {
             throw new ValidationException(ValidationCode.ASSERTION_DATA_HASH_MISMATCH);
         }
     }
@@ -179,9 +184,9 @@ public class AssertionConsumer {
 
             JumbfBox jumbfBox = (JumbfBox) contentBox;
 
-            byte[] digest = JpegTrustUtils.calculateDigestForJumbfBox(jumbfBox);
+            DigestResultForJumbfBox digest = jumbfBoxDigestService.calculateDigestForJumbfBox(jumbfBox);
             String uri = computeUriForAssertion(manifestId, assertionStore, jumbfBox);
-            HashedUriReference ref = new HashedUriReference(digest, uri, HashedUriReference.SUPPORTED_HASH_ALGORITHM);
+            HashedUriReference ref = new HashedUriReference(digest.getDigest(), uri, digest.getAlgorithm());
             result.add(ref);
         }
         return result;
