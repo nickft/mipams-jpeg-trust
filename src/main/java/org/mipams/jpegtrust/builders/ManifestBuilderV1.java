@@ -1,37 +1,26 @@
 package org.mipams.jpegtrust.builders;
 
-import java.io.FileInputStream;
-import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
-import org.mipams.jpegtrust.config.JpegTrustConfig;
 import org.mipams.jpegtrust.cose.CoseUtils;
 import org.mipams.jpegtrust.entities.ClaimV1;
+import org.mipams.jpegtrust.entities.DigestResultForJumbfBox;
 import org.mipams.jpegtrust.entities.HashedUriReference;
-import org.mipams.jpegtrust.entities.assertions.Assertion;
-import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertionV1;
+import org.mipams.jpegtrust.entities.JpegTrustUtils;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimSignatureContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.TrustManifestContentType;
-import org.mipams.jumbf.config.JumbfConfig;
 import org.mipams.jumbf.entities.CborBox;
-import org.mipams.jumbf.entities.DescriptionBox;
 import org.mipams.jumbf.entities.JumbfBox;
 import org.mipams.jumbf.entities.JumbfBoxBuilder;
-import org.mipams.jumbf.services.CoreGeneratorService;
 import org.mipams.jumbf.util.CoreUtils;
 import org.mipams.jumbf.util.MipamsException;
-import org.mipams.privsec.config.PrivsecConfig;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class ManifestBuilderV1 {
 
@@ -40,7 +29,7 @@ public class ManifestBuilderV1 {
     private ClaimV1 claim;
     private byte[] claimSignature;
     private List<X509Certificate> claimSignatureCertificates;
-    private LinkedHashSet<JumbfBox> assertionMap;
+    private LinkedHashMap<JumbfBox, HashedUriReference> assertionMap;
     private TrustManifestContentType trustManifestContentType;
 
     public ManifestBuilderV1(TrustManifestContentType trustManifestContentType) {
@@ -49,36 +38,23 @@ public class ManifestBuilderV1 {
         this.claim = new ClaimV1();
         this.claim.setSignature("self#jumbf=c2pa.signature");
         this.claimSignature = new byte[0];
-        this.assertionMap = new LinkedHashSet<>();
+        this.assertionMap = new LinkedHashMap<>();
     }
 
-    public ManifestBuilderV1 addIngredientAssertion(IngredientAssertionV1 ingredientAssertion,
-            JumbfBox ingredientManifest) throws MipamsException {
-        if (ingredientManifest.getDescriptionBox().getLabel() == null) {
-            throw new MipamsException(
-                    String.format("Ingredient manifest with no label %s", ingredientManifest.toString()));
-        }
-        final byte[] locallyComputedHash = calculateDigestForJumbfBox(ingredientManifest);
-        final HashedUriReference hashedUriReference = new HashedUriReference();
-        hashedUriReference
-                .setUrl(String.format("self#jumbf=/c2pa/%s", ingredientManifest.getDescriptionBox().getLabel()));
-        hashedUriReference.setDigest(locallyComputedHash);
-
-        ingredientAssertion.setManifestReference(hashedUriReference);
-
-        addAssertion(ingredientAssertion);
-
-        return this;
-    }
-
-    public ManifestBuilderV1 addAssertion(Assertion assertion) throws MipamsException {
-        JumbfBox assertionJumbfBox = assertion.toJumbfBox();
+    public ManifestBuilderV1 addAssertion(JumbfBox assertionJumbfBox, DigestResultForJumbfBox digest)
+            throws MipamsException {
 
         if (assertionJumbfBox.getDescriptionBox().getLabel() == null) {
             throw new MipamsException(String.format("Assertion with no label %s", assertionJumbfBox.toString()));
         }
 
-        assertionMap.add(assertionJumbfBox);
+        HashedUriReference hashedUriReference = new HashedUriReference();
+        hashedUriReference.setAlgorithm(digest.getAlgorithm());
+        hashedUriReference.setDigest(digest.getDigest());
+        hashedUriReference.setUrl(
+                String.format("self#jumbf=c2pa.assertions/%s", assertionJumbfBox.getDescriptionBox().getLabel()));
+
+        this.assertionMap.put(assertionJumbfBox, hashedUriReference);
         return this;
     }
 
@@ -89,15 +65,6 @@ public class ManifestBuilderV1 {
 
         claim.getRedactedAssertions().add(jumbfUriReference);
 
-        return this;
-    }
-
-    public ManifestBuilderV1 addProtectedAssertion(JumbfBox protectedAssertion) throws MipamsException {
-        if (protectedAssertion.getDescriptionBox().getLabel() == null) {
-            throw new MipamsException(String.format("Assertion with no label %s", protectedAssertion.toString()));
-        }
-
-        assertionMap.add(protectedAssertion);
         return this;
     }
 
@@ -138,16 +105,7 @@ public class ManifestBuilderV1 {
 
     private void buildClaimAssertions() throws MipamsException {
         this.claim.getAssertions().clear();
-        for (JumbfBox assertionJumbfBox : assertionMap) {
-            final byte[] locallyComputedHash = calculateDigestForJumbfBox(assertionJumbfBox);
-
-            final HashedUriReference hashedUriReference = new HashedUriReference();
-            hashedUriReference.setUrl(
-                    String.format("self#jumbf=c2pa.assertions/%s", assertionJumbfBox.getDescriptionBox().getLabel()));
-            hashedUriReference.setDigest(locallyComputedHash);
-
-            this.claim.getAssertions().add(hashedUriReference);
-        }
+        this.assertionMap.values().forEach(val -> this.claim.getAssertions().add(val));
     }
 
     public ManifestBuilderV1 setClaimSignature(byte[] coseEncodedByteArray) throws MipamsException {
@@ -168,16 +126,11 @@ public class ManifestBuilderV1 {
             throw new MipamsException("Empty manifest: No assertions specified");
         }
 
-        if (assertionMap.isEmpty()) {
-            throw new MipamsException("Empty manifest: No assertions specified");
-        }
-        // NULL checks
-
         final AssertionStoreContentType assertionStoreContentType = new AssertionStoreContentType();
         assertionStoreJumbfBoxBuilder = new JumbfBoxBuilder(assertionStoreContentType);
         assertionStoreJumbfBoxBuilder.setJumbfBoxAsRequestable();
         assertionStoreJumbfBoxBuilder.setLabel(assertionStoreContentType.getLabel());
-        assertionStoreJumbfBoxBuilder.appendAllContentBoxes(new ArrayList<>(assertionMap));
+        assertionStoreJumbfBoxBuilder.appendAllContentBoxes(new ArrayList<>(assertionMap.keySet()));
 
         JumbfBoxBuilder manifestJumbfBoxBuilder = new JumbfBoxBuilder(trustManifestContentType);
         manifestJumbfBoxBuilder.setJumbfBoxAsRequestable();
@@ -224,78 +177,27 @@ public class ManifestBuilderV1 {
     }
 
     public void removeAssertion(String label) {
-        this.claim.getAssertions().removeIf(hashedUri -> hashedUri.getUrl().contains(label));
+        this.claim.getAssertions()
+                .removeIf(hashedUri -> hashedUri.getUrl().contains(label));
 
-        this.assertionMap = new LinkedHashSet<>(
-                this.assertionMap.stream().filter(entrySet -> !entrySet.getDescriptionBox().getLabel().equals(label))
-                        .collect(Collectors.toSet()));
-    }
-
-    private byte[] calculateDigestForJumbfBox(JumbfBox jumbfBox) throws MipamsException {
-        String tempFilePath = "";
-        try {
-
-            String tempFile = CoreUtils.randomStringGenerator();
-            tempFilePath = CoreUtils.createTempFile(tempFile, CoreUtils.JUMBF_FILENAME_SUFFIX);
-
-            ApplicationContext context = new AnnotationConfigApplicationContext(JpegTrustConfig.class,
-                    JumbfConfig.class, PrivsecConfig.class);
-            CoreGeneratorService coreGeneratorService = context.getBean(CoreGeneratorService.class);
-            coreGeneratorService.generateJumbfMetadataToFile(List.of(jumbfBox), tempFilePath);
-
-            ((ConfigurableApplicationContext) context).close();
-
-            try (FileInputStream fis = new FileInputStream(tempFilePath)) {
-                MessageDigest sha = MessageDigest.getInstance("SHA-256");
-
-                byte[] buffer = new byte[128];
-
-                fis.skip((jumbfBox.isXBoxEnabled() ? 16 : 8));
-
-                while (fis.available() > 0) {
-                    int l = fis.read(buffer);
-                    sha.update(buffer, 0, l);
-                }
-
-                return sha.digest();
-            }
-        } catch (Exception e) {
-            throw new MipamsException(e);
-        } finally {
-            CoreUtils.deleteFile(tempFilePath);
-        }
+        this.assertionMap.entrySet().removeIf(
+                entry -> entry.getKey()
+                        .getDescriptionBox()
+                        .getLabel()
+                        .equals(label));
     }
 
     private void ensureLabelUniquenessInAssertionStore() throws MipamsException {
-        Map<String, Long> labelOccurenceMap = computeDuplicateLabelOccurrenceMap();
 
-        LinkedHashSet<JumbfBox> result = new LinkedHashSet<>();
+        List<JumbfBox> allAssertions = new ArrayList<>(assertionMap.keySet());
 
-        for (JumbfBox assertion : assertionMap) {
-            final String commonLabel = assertion.getDescriptionBox().getLabel();
-            Long occurences = labelOccurenceMap.get(commonLabel);
+        Map<String, Long> assertionsLabelOccurenceMap = JpegTrustUtils
+                .computeDuplicateLabelOccurrenceMap(allAssertions);
 
-            if (occurences == null) {
-                result.add(assertion);
-                continue;
-            }
+        boolean hasDuplicateAssertionLabel = assertionsLabelOccurenceMap.values().stream().anyMatch(v -> v > 1);
 
-            String uniqueLabel = String.format("%s__%d", commonLabel, occurences);
-            JumbfBoxBuilder builder = new JumbfBoxBuilder(assertion);
-            builder.setLabel(uniqueLabel);
-
-            result.add(builder.getResult());
-
-            labelOccurenceMap.put(commonLabel, --occurences);
+        if (hasDuplicateAssertionLabel) {
+            throw new MipamsException("There are duplicate assertion labels in the Assertion Store");
         }
-
-        this.assertionMap = result;
-    }
-
-    private Map<String, Long> computeDuplicateLabelOccurrenceMap() throws MipamsException {
-        return new TreeMap<>(assertionMap.stream().map(box -> box.getDescriptionBox())
-                .collect(Collectors.groupingBy(DescriptionBox::getLabel, Collectors.counting())).entrySet().stream()
-                .filter(entry -> entry.getValue() >= 2)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 }
