@@ -1,20 +1,37 @@
-# MIPAMS JPEG Trust
+# MIPAMS JPEG Trust (ISO/IEC 21617 series)
 
-This is an SDK library in Java that provides the interfaces to securely annotate provenance data as specified in ISO/IEC 21617-1 (JPEG Trust - Part 1: Core Foundation). It provides the interfaces to produce JPEG Trust data, but also to validate that a JPEG Trust Record embedded in a media asset is valid and well-formed.
+This repository provides a Java reference SDK for **JPEG Trust - Part 1: Core Foundation (ISO/IEC 21617-1)**. 
 
-## Building from source code
-Once all dependencies are available in the local maven repository, it is possible to build this reference implementation from source code. This allows to install the JPEG Trust reference implementation as an available package in the local maven repository as well.
+It provides the necessary interfaces and services to securely annotate provenance data, generate JPEG Trust Records, and validate that a Trust Record embedded within a media asset is well-formed and authentic.
 
-Building from scratch the org.mipams.jpeg-trust library as a package available in the local maven repository. This assumes that the org.mipams.privsec is already installed in the local maven repository. To install MIPAMS JPEG Trust library run the following command within the home directory of the repository:
+---
+
+## Requirements & Prerequisites
+
+This is a standalone repository, but it fundamentally relies on the core JUMBF data structures and security extensions provided by the [MIPAMS JPEG Systems repository](https://github.com/nickft/mipams-jpeg-systems).
+
+**CRITICAL:** Before you can build this JPEG Trust SDK, you must first build and install the following specific dependencies into your local Maven repository:
+
+* **JUMBF** (`jumbf-2.1`)
+* **Privacy & Security** (`privsec-1.1`)
+
+**How to install the prerequisites:**
+1. Clone the `mipams-jpeg-systems` repository.
+2. Run `mvn clean install` from the root of that project.
+
+---
+
+## Installation & Build
+
+Once the core JUMBF and PrivSec dependencies are available in your local environment, you can build and install the JPEG Trust extension from the root of this repository:
 
 ```bash
 mvn clean install
 ```
 
-NOTE: This library depends on the MIPAMS JUMBF implementation for handling arbitrary JUMBF payload. See [here](https://github.com/nickft/mipams-jpeg-systems) for more information on how to build it from scratch.
+### Importing as a Dependency
 
-## Importing as a dependency
-Once the org.mipams.jpeg-trust library has been successfully installed in the local environment, an end-user application can install it as part of its own dependencies by adding the dependency snippet in the pom.xml file of the application as shown in Figure A.2. Including the MIPAMS JPEG Trust implementation by including the following dependency in the pom.xml file:
+End-user applications can include the JPEG Trust implementation by adding the following to their `pom.xml`:
 
 ```xml
 <dependency>
@@ -24,26 +41,23 @@ Once the org.mipams.jpeg-trust library has been successfully installed in the lo
 </dependency>
 ```
 
-## Examples of using the MIPAMS JPEG Trust SDK
-### Creating a JPEG Trust Record
-One of the key functionalities of this SDK is the creation of JPEG Trust data. An example is shown below where one may use the ManifestBuilder object to instruct the creation of a particular type of Trust Manifest. In this example, a Standard Manifest Content type is selected. 
+---
+
+## Usage Scenarios
+
+### 1. Creating a JPEG Trust Record
+
+One of the key functionalities of this SDK is the creation of JPEG Trust data. The `ManifestBuilder` allows you to instruct the creation of specific Trust Manifests. In this example, a Standard Manifest Content type is selected.
 
 ```java
 import org.mipams.jumbf.entities.JumbfBox;
-
 import org.mipams.jpegtrust.entities.JpegTrustUtils;
 import org.mipams.jpegtrust.jpeg_systems.content_types.StandardManifestContentType;
 import org.mipams.jpegtrust.builders.ManifestBuilder;
 
-// Code omitted for presentation purposes. 
-// At some point there is the actual application logic
-// ...
+// ... Application logic to instantiate ActionAssertion and ContentBinding ...
 
 ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());
-
-// The application logic has instantiated an ActionAssertion and a ContentBinding object
-// in the variables actionAssertion and contentBindingAssertion respectively.
-// ...
 
 builder.addCreatedAssertion(actionAssertion, actionAssertionDigest);
 builder.addCreatedAssertion(contentBindingAssertion, contentBindingAssertionDigest);
@@ -53,62 +67,67 @@ builder.setInstanceID("uuid:7b57930e-2f23-47fc-affe-0400d70b738d");
 builder.setGeneratorInfoName("MIPAMS GENERATOR 0.1");
 builder.setAlgorithm("sha256");
 
-// Include the associated list of certificates 
-// associated with the private key used for signing the claim
+// Include certificates associated with the private key used for signing
 builder.setClaimSignatureCertificates(certificates);
 
 byte[] encodedClaim = builder.encodeClaimToBeSigned();
 
-// Application-specific logic to digitally sign the encodedClaim object and produce 
-// the resulted signature as an array of bytes in the variable claimSignature.
-// The signature is stored as raw signature bytes (i.e., not as an ASN.1/DER-encoded structure).
-// ...
+// ... Application-specific logic to digitally sign the encodedClaim ...
+// The signature is stored as raw signature bytes (not ASN.1/DER-encoded).
 
 builder.setClaimSignature(claimSignature);
 
-JumbfBox trustManifest = builder.build();
-
+// Generate the final Trust Record JUMBF Box
 JumbfBox trustRecord = JpegTrustUtils.buildTrustRecord(builder.build());
 
-// Either embed the Trust Record Content type JUMBF box 
-// or store the result as a standalone .jumbf file
-// ...
+// You can now embed the trustRecord into a JPEG or store it as a .jumbf file
 ```
 
+### 2. Verifying a Trust Record and Extracting Indicators
 
-### Verifying that a JPEG Trust Record is valid and well-formed
-
-One of the core parts of the overall JPEG Trust framework is the extraction of Trust Indicators coming from the media asset. This reference implementation exposes a service, namely  the ManifestConsumerServie. It is developed as a Java Bean class, allowing applications to load it and use it to validate the provided JUMBF box that corresponds to a JPEG Trust Record Content type. 
-
-The figure below demonstrates how this service can be invoked in order to extract the Trust Indicators Set in the form of a Java object that could be later serialized as a JSON structure to be evaluated against a Trust Profile. This example shows how a third application would use the service offered by this referencec implementation to extract the Trust Indicator Set. Assuming that it has already located and extracted the JPEG Trust Record JUMBF box (instantiated as a JumbfBox Java object in the variable trustRecord) within the media asset, it is able to invoke the “validate()” method to extract all the Trust Indicators from the JPEG Trust metadata of the media asset. The main functionalities of this service is to evaluate that the provided JPEG Trust Record constitutes a well-formed JUMBF Box. This is equivalent to the service validating all internal JUMBF Boxes within a JPEG Trust Record and ensuring that their contents have been encoded in conformance to ISO/IEC 21617-1. In addition, this service performs all the integrity and authenticity checks ensuring that the JPEG Trust Record can be considered valid.
+The SDK exposes `ManifestConsumerService`, a Spring-managed Java Bean, to evaluate that a provided JUMBF box is a well-formed Trust Record compliant with ISO/IEC 21617-1. It performs integrity and authenticity checks and extracts the **Trust Indicators Set**.
 
 ```java
 import org.mipams.jumbf.util.MipamsException;
-
 import org.mipams.jpegtrust.service.ManifestConsumerService;
 import org.mipams.jpegtrust.entities.validation.trustindicators.TrustIndicatorSet;
+import org.springframework.beans.factory.annotation.Autowired;
 
+@Autowired
 ManifestStoreConsumerService manifestStoreConsumerService;
 
 public TrustIndicatorSet validateTrustRecordAndExtractTrustIndicatorSet(JumbfBox trustRecord, String targetFileUrl) throws MipamsException {
 
-// Validate the extracted trustRecord associated with a media asset 
-// located at targetFileUrl
-
+    // Validate the extracted trustRecord associated with a media asset located at targetFileUrl
     TrustIndicatorSet trustIndicatorSet = manifestStoreConsumerService.validate(trustRecord, targetFileUrl);
+    
     return trustIndicatorSet;
 }
 ```
+*Note: The resulting `TrustIndicatorSet` object can later be serialized as a JSON structure to be evaluated against a specific Trust Profile.*
 
-## Current assumptions on the implementation
+---
 
-|Title| Description|
-|--|--|
-|Cryptographic Operations| Verification of ECDSA and RSA digital signatures. Support of "SHA256" hashing algorithm for the proccessing of integrity checks on the hashed (JUMBF) URI referenecs.|
-|Serialization of Certificates| |
-|Unknown assertions are not rejected| |
-|External references | The library does not handle external JUMBF URI references. |
-|Ingredient validation results | The library does not take into consideration metadata concerning the validation of ingredient assertions. It goes and validates them from scratch. |
-|Assertion-specific validation (e.g., Actions, Metadata, Ingredients) | Constraints pertaining to the assertion-specific requirements are not implemented yet.|
-|Not checking date formats | No constraint pertaining to the date formats is taken into consideration.|
-|TSA Countersignature | TSA countersignature in the Claim structure is not processed and is not validated. |
+## Current Assumptions & Limitations
+
+| Feature/Scope | Description |
+| :--- | :--- |
+| **Cryptographic Operations** | Verifies ECDSA and RSA digital signatures. Supports `sha256` hashing for integrity checks on JUMBF URI references. |
+| **Serialization of Certificates** | Handled natively by the SDK. |
+| **Unknown Assertions** | Unknown assertions are currently not rejected. |
+| **External References** | The library does not handle external JUMBF URI references. |
+| **Ingredient Validation** | Does not consider metadata concerning the validation of ingredient assertions; it validates them from scratch. |
+| **Assertion-Specific Validation** | Constraints pertaining to specific assertions (e.g., Actions, Metadata, Ingredients) are not implemented yet. |
+| **Date Formats** | No constraints pertaining to date formats are taken into consideration during validation. |
+| **TSA Countersignature** | TSA countersignatures in the Claim structure are not processed or validated. |
+
+---
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. 
+
+You may obtain a copy of the License at:
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
