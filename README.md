@@ -12,8 +12,8 @@ This is a standalone repository, but it fundamentally relies on the core JUMBF d
 
 **CRITICAL:** Before you can build this JPEG Trust SDK, you must first build and install the following specific dependencies into your local Maven repository:
 
-* **JUMBF** (`jumbf-2.1`)
-* **Privacy & Security** (`privsec-1.1`)
+* **JUMBF** (`jumbf-2.2`)
+* **Privacy & Security** (`privsec-1.2`)
 
 **How to install the prerequisites:**
 1. Clone the `mipams-jpeg-systems` repository.
@@ -37,9 +37,37 @@ End-user applications can include the JPEG Trust implementation by adding the fo
 <dependency>
     <groupId>org.mipams</groupId>
     <artifactId>jpeg-trust</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
+
+### Loading all services from library
+
+After adding the dependency, all services provided by the SDK can be registered within the host application's Spring context. An example of how the registration can take place through configuration files, is shown below (This example shows how to use the @Import annotation to the main class of an end user application):
+
+```java
+import org.mipams.jpegtrust.config.JpegTrustConfig;
+import org.mipams.jumbf.config.JumbfConfig;
+import org.mipams.privsec.config.PrivSecConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
+
+@SpringBootApplication
+@Import({
+    JpegTrustConfig.class, 
+    JumbfConfig.class, 
+    PrivSec.class
+}) 
+public class EndUserApplicationMainClass {
+
+    public static void main(String[] args) {
+        SpringApplication.run(EndUserApplicationMainClass.class, args);
+    }
+}
+```
+
+Once configured, the services of the SDK are fully managed Spring Beans. Therefore, they can be injected into the end user application using @Autowired or constructor injection. Examples of using the SDK are presented in the Usage Scenarios below.
 
 ---
 
@@ -125,20 +153,12 @@ public TrustIndicatorSet validateTrustRecordAndExtractTrustIndicatorSet(JumbfBox
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0. 
+This project is currently licensed under the **BSD 3-Clause License**. 
 
-```
-Copyright 2022-Present Nikolaos Fotos, Universitat Politècnica de Catalunya (UPC)
+Please note the following version-specific license transitions:
+* **Main Project:** Version 1.2 and onward are licensed under the BSD 3-Clause License. (Versions prior to 1.2 were licensed under the Apache License, Version 2.0).
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+You may obtain a copy of the current license at:
+[https://opensource.org/licenses/BSD-3-Clause](https://opensource.org/licenses/BSD-3-Clause)
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+See the `LICENSE` file in the root directory of this repository for the full text, including specific permissions, conditions, and disclaimers.
