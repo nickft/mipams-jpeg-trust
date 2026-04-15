@@ -10,6 +10,8 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
+import java.security.spec.MGF1ParameterSpec;
+import java.security.spec.PSSParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -33,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import com.authlete.cose.COSEProtectedHeader;
 import com.authlete.cose.COSEUnprotectedHeader;
+import com.authlete.cose.constants.COSEAlgorithms;
 
 @Service
 public class ClaimSignatureConsumer {
@@ -76,7 +79,6 @@ public class ClaimSignatureConsumer {
             throws MipamsException {
         try {
             byte[] claimSignature = getClaimSignatureFromClaimSignatureBox(claimSignatureJumbfBox);
-            byte[] derClaimSignature = JpegTrustUtils.encodeToDER(claimSignature);
 
             List<X509Certificate> certificates = getListOfCertificatesFromClaimSignatureBox(claimSignatureJumbfBox);
 
@@ -92,16 +94,71 @@ public class ClaimSignatureConsumer {
 
             byte[] keyBytes = Base64.getDecoder().decode(publicKeyString);
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("EC");
-            PublicKey pubKey = keyFactory.generatePublic(keySpec);
 
-            Signature signature = Signature.getInstance("SHA256withECDSA");
+            PublicKey pubKey;
+            Signature signature;
+            byte[] signaturePayload = claimSignature;
+
+            Object algObj = protectedHeader.getAlg();
+
+            if (algObj == null) {
+                throw new MipamsException("COSE Protected Header is missing the algorithm (alg) parameter.");
+            }
+
+            int coseAlgorithmId = CoseUtils.getSigningAlgorithmFromCOSEProtectedHeader(protectedHeader);
+
+            switch (coseAlgorithmId) {
+                // --- ECDSA Family ---
+                case COSEAlgorithms.ES256: // -7
+                    pubKey = KeyFactory.getInstance("EC").generatePublic(keySpec);
+                    signature = Signature.getInstance("SHA256withECDSA");
+                    signaturePayload = JpegTrustUtils.encodeToDER(claimSignature);
+                    break;
+                case COSEAlgorithms.ES384: // -35
+                    pubKey = KeyFactory.getInstance("EC").generatePublic(keySpec);
+                    signature = Signature.getInstance("SHA384withECDSA");
+                    signaturePayload = JpegTrustUtils.encodeToDER(claimSignature);
+                    break;
+                case COSEAlgorithms.ES512: // -36
+                    pubKey = KeyFactory.getInstance("EC").generatePublic(keySpec);
+                    signature = Signature.getInstance("SHA512withECDSA");
+                    signaturePayload = JpegTrustUtils.encodeToDER(claimSignature);
+                    break;
+
+                // --- RSA-PSS Family ---
+                case COSEAlgorithms.PS256: // -37
+                    pubKey = KeyFactory.getInstance("RSA").generatePublic(keySpec);
+                    signature = Signature.getInstance("RSASSA-PSS");
+                    signature.setParameter(new PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1));
+                    break;
+                case COSEAlgorithms.PS384: // -38
+                    pubKey = KeyFactory.getInstance("RSA").generatePublic(keySpec);
+                    signature = Signature.getInstance("RSASSA-PSS");
+                    signature.setParameter(new PSSParameterSpec("SHA-384", "MGF1", MGF1ParameterSpec.SHA384, 48, 1));
+                    break;
+                case COSEAlgorithms.PS512: // -39
+                    pubKey = KeyFactory.getInstance("RSA").generatePublic(keySpec);
+                    signature = Signature.getInstance("RSASSA-PSS");
+                    signature.setParameter(new PSSParameterSpec("SHA-512", "MGF1", MGF1ParameterSpec.SHA512, 64, 1));
+                    break;
+
+                // --- EdDSA Family ---
+                case COSEAlgorithms.EdDSA: // -8
+                    // Note: Use "Ed25519" or "EdDSA" depending on your provider (Java 15+)
+                    pubKey = KeyFactory.getInstance("EdDSA").generatePublic(keySpec);
+                    signature = Signature.getInstance("EdDSA");
+                    // EdDSA signatures are already "plain" fixed-length, no DER conversion needed
+                    break;
+
+                default:
+                    throw new MipamsException("Unsupported COSE algorithm ID: " + coseAlgorithmId);
+            }
+
             signature.initVerify(pubKey);
             signature.update(encodedClaim);
+            boolean isValid = signature.verify(signaturePayload);
 
-            boolean result = signature.verify(derClaimSignature);
-
-            if (!result) {
+            if (!isValid) {
                 throw new ValidationException(ValidationCode.SIGNING_CREDENTIAL_INVALID);
             }
 
@@ -138,7 +195,12 @@ public class ClaimSignatureConsumer {
 
         ClaimSignatureIndicators claimSignatureIndicators = new ClaimSignatureIndicators();
 
-        claimSignatureIndicators.setSignatureAlgorithm(primaryCert.getSigAlgName());
+        COSEProtectedHeader protectedHeader = getClaimSignatureProtectedHeaderFromClaimSignatureBox(
+                claimSignatureJumbfBox);
+
+        int coseAlgorithmId = CoseUtils.getSigningAlgorithmFromCOSEProtectedHeader(protectedHeader);
+
+        claimSignatureIndicators.setSignatureAlgorithm(COSEAlgorithms.getNameByValue(coseAlgorithmId));
 
         claimSignatureIndicators.getSubject().putAll(parseX500Principal(primaryCert.getSubjectX500Principal()));
 

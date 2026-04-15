@@ -19,7 +19,6 @@ import org.mipams.jpegtrust.entities.assertions.Assertion;
 import org.mipams.jpegtrust.entities.assertions.BindingAssertion;
 import org.mipams.jpegtrust.entities.assertions.actions.ActionAssertion;
 import org.mipams.jpegtrust.entities.assertions.actions.ActionsAssertion;
-import org.mipams.jpegtrust.entities.assertions.actions.ParametersMap;
 import org.mipams.jpegtrust.entities.assertions.enums.ActionChoice;
 import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertion;
 import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertionV1;
@@ -115,9 +114,11 @@ public class ManifestScenarios {
         PrivateKey privKey = CryptoUtils
                 .getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
 
+        byte[] payload = builder.encodeClaimToBeSigned();
+
         Signature signature = Signature.getInstance("SHA256withECDSA");
         signature.initSign(privKey);
-        signature.update(builder.encodeClaimToBeSigned());
+        signature.update(payload);
 
         builder.setClaimSignature(CryptoUtils.decodeFromDER(signature.sign(), 32));
 
@@ -194,7 +195,8 @@ public class ManifestScenarios {
         ingredientAssertion.setTitle("Ingredient manifest");
         ingredientAssertion.setMediaType(mediaType);
 
-        DigestResultForJumbfBox locallyComputedHash = digestService.calculateDigestForJumbfBox(ingredientManifest);
+        DigestResultForJumbfBox locallyComputedHash = digestService
+                .calculateDigestForJumbfBox(ingredientManifest);
         final HashedUriReference hashedUriReference = new HashedUriReference();
         hashedUriReference
                 .setUrl(String.format("self#jumbf=/c2pa/%s",
@@ -241,15 +243,13 @@ public class ManifestScenarios {
         action1.setAction(ActionChoice.C2PA_CREATED.getValue());
         action1.setSoftwareAgent("Image Editing Tool");
         action1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        ParametersMap map = new ParametersMap();
-        map.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
-        action1.setParameters(map);
+        action1.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
 
         ActionAssertion action2 = new ActionAssertion();
         action2.setAction(ActionChoice.C2PA_CONVERTED.getValue());
         action2.setSoftwareAgent("Image Editing Tool");
         action2.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        action2.setParameters(map);
+        action2.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
 
         ActionsAssertion actions = new ActionsAssertion();
         actions.setActions(List.of(action1, action2));
@@ -264,7 +264,6 @@ public class ManifestScenarios {
         action1.setAction(ActionChoice.C2PA_OPENED.getValue());
         action1.setSoftwareAgent("Image Editing Tool");
         action1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        ParametersMap map = new ParametersMap();
 
         final DigestResultForJumbfBox locallyComputedHash = jumbfBoxDigestService
                 .calculateDigestForJumbfBox(ingredientManifest);
@@ -274,8 +273,7 @@ public class ManifestScenarios {
         hashedUriReference.setAlgorithm(locallyComputedHash.getAlgorithm());
         hashedUriReference.setDigest(locallyComputedHash.getDigest());
 
-        map.setIngredients(List.of(hashedUriReference));
-        action1.setParameters(map);
+        action1.setIngredients(List.of(hashedUriReference));
 
         ActionAssertion action2 = new ActionAssertion();
         action2.setAction(ActionChoice.C2PA_FILTERED.getValue());

@@ -140,7 +140,7 @@ public TrustIndicatorSet validateTrustRecordAndExtractTrustIndicatorSet(JumbfBox
 
 | Feature/Scope | Description |
 | :--- | :--- |
-| **Cryptographic Operations** | Verifies ECDSA and RSA digital signatures. Supports `sha256` hashing for integrity checks on JUMBF URI references. |
+| **Cryptographic Operations** | Supports the verification of all types of allowed digital signatures. Supports `sha256` hashing for integrity checks on JUMBF URI references. |
 | **Serialization of Certificates** | Handled natively by the SDK. |
 | **Unknown Assertions** | Unknown assertions are currently not rejected. |
 | **External References** | The library does not handle external JUMBF URI references. |

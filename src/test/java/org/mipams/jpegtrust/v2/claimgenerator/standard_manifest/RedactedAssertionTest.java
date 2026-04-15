@@ -7,8 +7,8 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +21,6 @@ import org.mipams.jpegtrust.entities.assertions.Assertion;
 import org.mipams.jpegtrust.entities.assertions.BindingAssertion;
 import org.mipams.jpegtrust.entities.assertions.actions.ActionAssertion;
 import org.mipams.jpegtrust.entities.assertions.actions.ActionsAssertion;
-import org.mipams.jpegtrust.entities.assertions.actions.ParametersMap;
 import org.mipams.jpegtrust.entities.assertions.cawg.MetadataAssertion;
 import org.mipams.jpegtrust.entities.assertions.enums.ActionChoice;
 import org.mipams.jpegtrust.entities.assertions.ingredients.IngredientAssertion;
@@ -126,8 +125,8 @@ public class RedactedAssertionTest {
         assertion1.setAction(ActionChoice.C2PA_OPENED.getValue());
         assertion1.setSoftwareAgent("Image Editing Tool");
         assertion1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        ParametersMap map = new ParametersMap();
-        map.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
+        assertion1.setParameters(new HashMap<>());
+        assertion1.getParameters().put("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d");
 
         final DigestResultForJumbfBox locallyComputedHash = jumbfBoxDigestService
                 .calculateDigestForJumbfBox(ingredientManifest);
@@ -136,8 +135,7 @@ public class RedactedAssertionTest {
                 .setUrl(String.format("self#jumbf=c2pa.assertions/c2pa.ingredient.v3"));
         hashedUriReference.setDigest(locallyComputedHash.getDigest());
 
-        map.setIngredients(List.of(hashedUriReference));
-        assertion1.setParameters(map);
+        assertion1.setIngredients(List.of(hashedUriReference));
 
         ActionsAssertion actions = new ActionsAssertion();
         actions.setActions(List.of(assertion1));
@@ -149,7 +147,8 @@ public class RedactedAssertionTest {
         Arrays.fill(pad, Byte.parseByte("0"));
         tempBindingAssertion.setPadding(pad);
 
-        final IngredientAssertion ingredientAssertion = ManifestScenarios.getIngredientAssertion(ingredientManifest,
+        final IngredientAssertion ingredientAssertion = ManifestScenarios.getIngredientAssertion(
+                ingredientManifest,
                 jumbfBoxDigestService, mediaType);
 
         final ManifestBuilder builder = new ManifestBuilder(new StandardManifestContentType());

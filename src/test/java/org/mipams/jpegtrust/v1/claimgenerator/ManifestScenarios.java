@@ -111,9 +111,11 @@ public class ManifestScenarios {
         PrivateKey privKey = CryptoUtils
                 .getPrivateKey(ResourceUtils.getFile("classpath:privKey.pem").getAbsolutePath());
 
+        byte[] payload = builder.encodeClaimToBeSigned();
+
         Signature signature = Signature.getInstance("SHA256withECDSA");
         signature.initSign(privKey);
-        signature.update(builder.encodeClaimToBeSigned());
+        signature.update(payload);
 
         builder.setClaimSignature(CryptoUtils.decodeFromDER(signature.sign(), 32));
 
