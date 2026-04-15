@@ -16,7 +16,7 @@ public class ClaimV1 implements ProvenanceEntity {
     private String claimGenerator;
 
     @JsonProperty("claim_generator_info")
-    private LinkedHashMap<String, String> claimGeneratorInfo = new LinkedHashMap<>();
+    private LinkedHashSet<LinkedHashMap<String, String>> claimGeneratorInfo = new LinkedHashSet<>();
 
     private String signature;
 
@@ -65,11 +65,11 @@ public class ClaimV1 implements ProvenanceEntity {
         this.assertions = assertions;
     }
 
-    public LinkedHashMap<String, String> getClaimGeneratorInfo() {
+    public LinkedHashSet<LinkedHashMap<String, String>> getClaimGeneratorInfo() {
         return claimGeneratorInfo;
     }
 
-    public void setClaimGeneratorInfo(LinkedHashMap<String, String> claimGeneratorInfo) {
+    public void setClaimGeneratorInfo(LinkedHashSet<LinkedHashMap<String, String>> claimGeneratorInfo) {
         this.claimGeneratorInfo = claimGeneratorInfo;
     }
 
