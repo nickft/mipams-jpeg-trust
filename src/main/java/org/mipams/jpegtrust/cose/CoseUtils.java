@@ -223,4 +223,22 @@ public class CoseUtils {
         CBORTaggedItem item = new CBORTaggedItem(18, coseSign1);
         return item.encode();
     }
+
+    public static int getSigningAlgorithmFromCOSEProtectedHeader(COSEProtectedHeader protectedHeader)
+            throws MipamsException {
+        Object algObj = protectedHeader.getAlg();
+
+        if (algObj == null) {
+            throw new MipamsException("COSE Protected Header is missing the algorithm (alg) parameter.");
+        }
+
+        int coseAlgId;
+        if (algObj instanceof Number) {
+            coseAlgId = ((Number) algObj).intValue();
+        } else {
+            throw new MipamsException("Algorithm is not an integer ID: " + algObj);
+        }
+
+        return coseAlgId;
+    }
 }
