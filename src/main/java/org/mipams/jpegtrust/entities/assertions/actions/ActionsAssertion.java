@@ -14,6 +14,7 @@ public class ActionsAssertion extends CborAssertion {
     private List<ActionTemplate> templates;
     private Map<String, String> softwareAgents;
     private AssertionMetadata metadata;
+    private Boolean allActionsIncluded;
 
     @Override
     public boolean isReductable() throws MipamsException {
@@ -55,5 +56,13 @@ public class ActionsAssertion extends CborAssertion {
 
     public void setMetadata(AssertionMetadata metadata) {
         this.metadata = metadata;
+    }
+
+    public Boolean getAllActionsIncluded() {
+        return allActionsIncluded;
+    }
+
+    public void setAllActionsIncluded(boolean val) {
+        this.allActionsIncluded = val;
     }
 }

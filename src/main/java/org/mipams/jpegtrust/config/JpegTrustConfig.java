@@ -1,5 +1,6 @@
 package org.mipams.jpegtrust.config;
 
+import org.mipams.jpegtrust.jpeg_systems.PngCodestreamParser;
 import org.mipams.jpegtrust.jpeg_systems.SaltHashBoxService;
 import org.mipams.jpegtrust.jpeg_systems.content_types.AssertionStoreContentType;
 import org.mipams.jpegtrust.jpeg_systems.content_types.ClaimContentType;
@@ -118,5 +119,10 @@ public class JpegTrustConfig {
     @Bean
     public JumbfBoxDigestService jumbfBoxDigestService() {
         return new JumbfBoxDigestService();
+    }
+
+    @Bean
+    public PngCodestreamParser pngCodestreamParser() {
+        return new PngCodestreamParser();
     }
 }
