@@ -1,6 +1,9 @@
 package org.mipams.jpegtrust.entities.assertions.ingredients;
 
+import java.util.List;
+
 import org.mipams.jpegtrust.entities.HashedUriReference;
+import org.mipams.jpegtrust.entities.assertions.AssetType;
 import org.mipams.jpegtrust.entities.assertions.CborAssertion;
 import org.mipams.jpegtrust.entities.assertions.metadata.AssertionMetadata;
 import org.mipams.jumbf.util.MipamsException;
@@ -33,7 +36,7 @@ public class IngredientAssertion extends CborAssertion {
     private HashedUriReference data;
 
     @JsonProperty("dataTypes")
-    private HashedUriReference dataTypes;
+    private List<AssetType> dataTypes;
 
     @JsonProperty("activeManifest")
     private HashedUriReference activeManifestOfIngredient;
@@ -106,11 +109,11 @@ public class IngredientAssertion extends CborAssertion {
         this.data = data;
     }
 
-    public HashedUriReference getDataTypes() {
+    public List<AssetType> getDataTypes() {
         return dataTypes;
     }
 
-    public void setDataTypes(HashedUriReference dataTypes) {
+    public void setDataTypes(List<AssetType> dataTypes) {
         this.dataTypes = dataTypes;
     }
 
