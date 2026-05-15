@@ -10,7 +10,7 @@ import org.mipams.jpegtrust.entities.assertions.region.Region;
 
 public class ActionAssertion {
     private String action;
-    private String softwareAgent;
+    private Map<String, String> softwareAgent;
     private Integer softwareAgentIndex;
     private String description;
     private String digitalSourceType;
@@ -28,11 +28,11 @@ public class ActionAssertion {
         this.action = action;
     }
 
-    public String getSoftwareAgent() {
+    public Map<String, String> getSoftwareAgent() {
         return softwareAgent;
     }
 
-    public void setSoftwareAgent(String softwareAgent) {
+    public void setSoftwareAgent(Map<String, String> softwareAgent) {
         this.softwareAgent = softwareAgent;
     }
 

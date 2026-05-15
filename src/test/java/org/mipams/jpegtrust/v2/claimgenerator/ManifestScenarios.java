@@ -241,13 +241,13 @@ public class ManifestScenarios {
     public static Assertion getInitialActions() {
         ActionAssertion action1 = new ActionAssertion();
         action1.setAction(ActionChoice.C2PA_CREATED.getValue());
-        action1.setSoftwareAgent("Image Editing Tool");
+        action1.setSoftwareAgent(Map.of("name", "Image Editing Tool"));
         action1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         action1.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
 
         ActionAssertion action2 = new ActionAssertion();
         action2.setAction(ActionChoice.C2PA_CONVERTED.getValue());
-        action2.setSoftwareAgent("Image Editing Tool");
+        action2.setSoftwareAgent(Map.of("name", "Image Editing Tool"));
         action2.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         action2.setParameters(Map.of("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d"));
 
@@ -262,7 +262,7 @@ public class ManifestScenarios {
 
         ActionAssertion action1 = new ActionAssertion();
         action1.setAction(ActionChoice.C2PA_OPENED.getValue());
-        action1.setSoftwareAgent("Image Editing Tool");
+        action1.setSoftwareAgent(Map.of("name", "Image Editing Tool"));
         action1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
 
         final DigestResultForJumbfBox locallyComputedHash = jumbfBoxDigestService
@@ -277,7 +277,7 @@ public class ManifestScenarios {
 
         ActionAssertion action2 = new ActionAssertion();
         action2.setAction(ActionChoice.C2PA_FILTERED.getValue());
-        action2.setSoftwareAgent("Image Editing Tool");
+        action2.setSoftwareAgent(Map.of("name", "Image Editing Tool"));
         action2.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
 
         ActionsAssertion actions = new ActionsAssertion();

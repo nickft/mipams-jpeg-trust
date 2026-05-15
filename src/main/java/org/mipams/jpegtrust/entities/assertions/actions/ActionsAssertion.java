@@ -12,7 +12,7 @@ import org.mipams.jumbf.util.MipamsException;
 public class ActionsAssertion extends CborAssertion {
     private List<ActionAssertion> actions;
     private List<ActionTemplate> templates;
-    private Map<String, String> softwareAgents;
+    private List<Map<String, String>> softwareAgents;
     private AssertionMetadata metadata;
     private Boolean allActionsIncluded;
 
@@ -42,11 +42,11 @@ public class ActionsAssertion extends CborAssertion {
         this.templates = templates;
     }
 
-    public Map<String, String> getSoftwareAgents() {
+    public List<Map<String, String>> getSoftwareAgents() {
         return softwareAgents;
     }
 
-    public void setSoftwareAgents(Map<String, String> softwareAgents) {
+    public void setSoftwareAgents(List<Map<String, String>> softwareAgents) {
         this.softwareAgents = softwareAgents;
     }
 

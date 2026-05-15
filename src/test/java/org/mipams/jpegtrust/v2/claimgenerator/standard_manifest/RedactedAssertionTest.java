@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,7 +87,7 @@ public class RedactedAssertionTest {
     @Test
     void testRedactingAssertiontsJxl() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jxl").getAbsolutePath();
-        String targetFileUrl = assetFileUrl.replace("sample.jxl", "s09-redacting-assertion-2ed.jxl");
+        String targetFileUrl = assetFileUrl.replace("sample.jxl", "s08-redacting-assertion-2ed.jxl");
 
         JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jxl");
 
@@ -103,7 +104,7 @@ public class RedactedAssertionTest {
     @Test
     void testRedactingAssertiontsJp2() throws Exception {
         String assetFileUrl = ResourceUtils.getFile("classpath:sample.jp2").getAbsolutePath();
-        String targetFileUrl = assetFileUrl.replace("sample.jp2", "s09-redacting-assertion-2ed.jp2");
+        String targetFileUrl = assetFileUrl.replace("sample.jp2", "s08-redacting-assertion-2ed.jp2");
 
         JumbfBox trustRecord = constructTrustRecordForScenario(assetFileUrl, "image/jp2");
 
@@ -123,7 +124,7 @@ public class RedactedAssertionTest {
 
         ActionAssertion assertion1 = new ActionAssertion();
         assertion1.setAction(ActionChoice.C2PA_OPENED.getValue());
-        assertion1.setSoftwareAgent("Image Editing Tool");
+        assertion1.setSoftwareAgent((Map.of("name", "Image Editing Tool")));
         assertion1.setWhen(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         assertion1.setParameters(new HashMap<>());
         assertion1.getParameters().put("instanceID", "xmp:iid:e928fac1-8473-4c70-1982-369e91d4e58d");
