@@ -2,10 +2,8 @@ package org.mipams.jpegtrust.entities.assertions;
 
 import java.util.regex.Pattern;
 
-import org.mipams.jpegtrust.entities.assertions.enums.AssetTypeChoice;
-
 public class AssetType {
-    AssetTypeChoice type;
+    String type;
     String version;
 
     private static final Pattern REGEX_PATTERN = Pattern.compile(
@@ -16,5 +14,21 @@ public class AssetType {
 
     public static boolean isCompliant(String input) {
         return REGEX_PATTERN.matcher(input).matches();
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }
