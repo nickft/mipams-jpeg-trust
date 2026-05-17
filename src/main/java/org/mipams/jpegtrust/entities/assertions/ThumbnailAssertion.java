@@ -1,79 +1,102 @@
 package org.mipams.jpegtrust.entities.assertions;
 
-import java.util.List;
-
-import org.mipams.jpegtrust.entities.JpegTrustUtils;
-import org.mipams.jumbf.entities.BinaryDataBox;
-import org.mipams.jumbf.entities.EmbeddedFileDescriptionBox;
-import org.mipams.jumbf.entities.JumbfBox;
-import org.mipams.jumbf.entities.JumbfBoxBuilder;
-import org.mipams.jumbf.services.content_types.EmbeddedFileContentType;
 import org.mipams.jumbf.util.MipamsException;
 import org.springframework.http.MediaType;
 
-public class ThumbnailAssertion implements Assertion {
+/**
+ * C2PA Thumbnail assertion (spec §18.13).
+ *
+ * A thumbnail assertion is technically identical to an embedded data assertion
+ * (§18.12) but carries a specific label identifying the use case:
+ *   - {@code c2pa.thumbnail.claim}      – created at claim creation time
+ *   - {@code c2pa.thumbnail.ingredient} – created when importing an ingredient
+ *
+ * Per §18.13.1.3: "A thumbnail assertion is an embedded data assertion but
+ * with a special label identifying this specific use case."
+ *
+ * Therefore this class extends {@link EmbeddedFileContentTypeAssertion} and
+ * does NOT use CBOR encoding.
+ *
+ * JUMBF structure:
+ *   JumbfBox  (EmbeddedFileContentType)
+ *     ├── EmbeddedFileDescriptionBox  (bfdb)  – media type, optional filename
+ *     └── BinaryDataBox               (bidb)  – raw image bytes
+ */
+public class ThumbnailAssertion extends EmbeddedFileContentTypeAssertion {
 
-    private final String claimCreationThumbnailLabel = "c2pa.thumbnail.claim";
-    private final String ingredientlThumbnailLabel = "c2pa.thumbnail.ingredient";
+    private static final String CLAIM_LABEL      = "c2pa.thumbnail.claim";
+    private static final String INGREDIENT_LABEL = "c2pa.thumbnail.ingredient";
 
-    boolean isClaimCreationTime = true;
-    String thumbnailUrl;
-    MediaType mediaType = MediaType.IMAGE_JPEG;
+    /** When {@code true} (default) the label is {@code c2pa.thumbnail.claim}. */
+    private boolean isClaimCreationTime = true;
 
+    private MediaType mediaType = MediaType.IMAGE_JPEG;
+    private String    fileName;
+    private byte[]    data;
+
+    // -----------------------------------------------------------------------
+    // Label / use-case control
+    // -----------------------------------------------------------------------
+
+    /** Select the claim-creation thumbnail label ({@code c2pa.thumbnail.claim}). */
     public void setIsClaimCreationTime() {
         this.isClaimCreationTime = true;
     }
 
-    public String getThumbnailUrl() {
-        return this.thumbnailUrl;
+    /** Select the ingredient thumbnail label ({@code c2pa.thumbnail.ingredient}). */
+    public void setIsClaimIngredientThumbnail() {
+        this.isClaimCreationTime = false;
     }
 
-    public void setThumbnailUrl(String thumbnailUrl) {
-        this.thumbnailUrl = thumbnailUrl;
+    // -----------------------------------------------------------------------
+    // Assertion / EmbeddedFileContentTypeAssertion implementation
+    // -----------------------------------------------------------------------
+
+    @Override
+    public String getDefaultLabel() {
+        return CLAIM_LABEL;
     }
 
+    @Override
+    public String getLabel() {
+        return isClaimCreationTime ? CLAIM_LABEL : INGREDIENT_LABEL;
+    }
+
+    /** Label is derived from {@link #setIsClaimCreationTime()} /
+     *  {@link #setIsClaimIngredientThumbnail()}; calling this setter has no effect. */
+    @Override
+    public void setLabel(String label) {
+        // intentionally ignored – label is controlled by isClaimCreationTime flag
+    }
+
+    @Override
     public String getMediaType() {
-        return this.mediaType.toString();
+        return mediaType.toString();
     }
+
+    @Override
+    public String getFileName() {
+        return fileName;
+    }
+
+    @Override
+    public byte[] getData() {
+        return data;
+    }
+
+    // -----------------------------------------------------------------------
+    // Getters & setters
+    // -----------------------------------------------------------------------
 
     public void setMediaType(MediaType mediaType) {
         this.mediaType = mediaType;
     }
 
-    public void setIsClaimIngredientThumbnail() {
-        this.isClaimCreationTime = false;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
-    @Override
-    public JumbfBox toJumbfBox() throws MipamsException {
-        return toEmbeddedFileJumbfBox();
-    }
-
-    @Override
-    public String getLabel() {
-        return this.isClaimCreationTime ? claimCreationThumbnailLabel : ingredientlThumbnailLabel;
-    }
-
-    private JumbfBox toEmbeddedFileJumbfBox() throws MipamsException {
-        JumbfBoxBuilder thumbnailJumbfBox = new JumbfBoxBuilder(new EmbeddedFileContentType());
-        thumbnailJumbfBox.setJumbfBoxAsRequestable();
-        thumbnailJumbfBox.setLabel(String.format("%s.%s", getLabel(), this.mediaType.getSubtype()));
-
-        EmbeddedFileDescriptionBox efdb = new EmbeddedFileDescriptionBox();
-        efdb.setMediaType(MediaType.IMAGE_JPEG);
-        efdb.markFileAsInternallyReferenced();
-
-        BinaryDataBox efbd = new BinaryDataBox();
-        efbd.setFileUrl(this.thumbnailUrl);
-
-        thumbnailJumbfBox.appendAllContentBoxes(List.of(efdb, efbd));
-        thumbnailJumbfBox.setPrivateField(JpegTrustUtils.addSaltBytes());
-
-        return thumbnailJumbfBox.getResult();
-    }
-
-    @Override
-    public boolean isReductable() throws MipamsException {
-        return true;
+    public void setData(byte[] data) {
+        this.data = data;
     }
 }

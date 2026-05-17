@@ -11,6 +11,17 @@ public interface Assertion extends ProvenanceEntity {
 
     @JsonIgnore
     public String getLabel();
+    
+    @JsonIgnore
+    default void setLabel(String label) {
+        // No hace nada por defecto
+    }
+
+
+    @JsonIgnore
+    default String getDefaultLabel() {
+        return null;
+    }
 
     @JsonIgnore
     public boolean isReductable() throws MipamsException;

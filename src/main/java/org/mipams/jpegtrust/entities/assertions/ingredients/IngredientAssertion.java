@@ -1,17 +1,27 @@
 package org.mipams.jpegtrust.entities.assertions.ingredients;
 
 import org.mipams.jpegtrust.entities.HashedUriReference;
+import org.mipams.jpegtrust.entities.assertions.AssetType;
 import org.mipams.jpegtrust.entities.assertions.CborAssertion;
 import org.mipams.jpegtrust.entities.assertions.metadata.AssertionMetadata;
 import org.mipams.jumbf.util.MipamsException;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class IngredientAssertion extends CborAssertion {
 
+    private String label = getDefaultLabel();
+    
+    public String getDefaultLabel() {
+        return "c2pa.ingredient.v3";
+    }
     @Override
     public String getLabel() {
-        return "c2pa.ingredient.v3";
+        return label;
+    }
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     @JsonProperty("dc:title")
@@ -33,7 +43,7 @@ public class IngredientAssertion extends CborAssertion {
     private HashedUriReference data;
 
     @JsonProperty("dataTypes")
-    private HashedUriReference dataTypes;
+    private List<AssetType> dataTypes;
 
     @JsonProperty("activeManifest")
     private HashedUriReference activeManifestOfIngredient;
@@ -106,13 +116,11 @@ public class IngredientAssertion extends CborAssertion {
         this.data = data;
     }
 
-    public HashedUriReference getDataTypes() {
-        return dataTypes;
-    }
+    public List<AssetType> getDataTypes() { return dataTypes; }
 
-    public void setDataTypes(HashedUriReference dataTypes) {
-        this.dataTypes = dataTypes;
-    }
+
+    public void setDataTypes(List<AssetType> dataTypes) { this.dataTypes = dataTypes; }
+
 
     public HashedUriReference getActiveManifestOfIngredient() {
         return activeManifestOfIngredient;

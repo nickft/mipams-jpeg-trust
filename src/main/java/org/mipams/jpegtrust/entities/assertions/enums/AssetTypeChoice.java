@@ -1,6 +1,7 @@
 package org.mipams.jpegtrust.entities.assertions.enums;
 
 import java.util.regex.Pattern;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum AssetTypeChoice {
     C2PA_TYPES_CLASSIFIER("c2pa.types.classifier"),
@@ -20,6 +21,7 @@ public enum AssetTypeChoice {
     C2PA_TYPES_GENERATOR("c2pa.types.generator"),
     C2PA_TYPES_GENERATOR_PROMPT("c2pa.types.generator.prompt"),
     C2PA_TYPES_GENERATOR_SEED("c2pa.types.generator.seed"),
+    C2PA_TYPES_GENERATOR_PARAMETERS("c2pa.types.generator.parameters"),
     C2PA_TYPES_MODEL("c2pa.types.model"),
     C2PA_TYPES_MODEL_JAX("c2pa.types.model.jax"),
     C2PA_TYPES_MODEL_KERAS("c2pa.types.model.keras"),
@@ -42,7 +44,7 @@ public enum AssetTypeChoice {
     AssetTypeChoice(String value) {
         this.value = value;
     }
-
+    @JsonValue
     public String getValue() {
         return value;
     }

@@ -8,9 +8,13 @@ import org.mipams.jpegtrust.entities.HashedUriReference;
 import org.mipams.jpegtrust.entities.assertions.enums.ActionReason;
 import org.mipams.jpegtrust.entities.assertions.region.Region;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ActionAssertion {
     private String action;
-    private String softwareAgent;
+    private GeneratorInfoMap softwareAgent;
     private Integer softwareAgentIndex;
     private String description;
     private String digitalSourceType;
@@ -28,11 +32,11 @@ public class ActionAssertion {
         this.action = action;
     }
 
-    public String getSoftwareAgent() {
+    public GeneratorInfoMap getSoftwareAgent() {
         return softwareAgent;
     }
 
-    public void setSoftwareAgent(String softwareAgent) {
+    public void setSoftwareAgent(GeneratorInfoMap softwareAgent) {
         this.softwareAgent = softwareAgent;
     }
 
@@ -106,6 +110,7 @@ public class ActionAssertion {
         }
     }
 
+    @JsonIgnore
     public String getRedacted() {
         if (parameters == null || parameters.get("redacted") == null) {
             return null;
@@ -119,6 +124,7 @@ public class ActionAssertion {
     }
 
     @SuppressWarnings("unchecked")
+    @JsonIgnore
     public List<HashedUriReference> getIngredients() {
         if (parameters == null) {
             return null;
@@ -131,6 +137,7 @@ public class ActionAssertion {
         parameters.put("ingredients", ingredients);
     }
 
+    @JsonIgnore
     public String getSourceLanguage() {
         if (parameters == null || parameters.get("sourceLanguage") == null) {
             return null;
@@ -143,6 +150,7 @@ public class ActionAssertion {
         parameters.put("sourceLanguage", sourceLanguage);
     }
 
+    @JsonIgnore
     public String getTargetLanguage() {
         if (parameters == null || parameters.get("targetLanguage") == null) {
             return null;
